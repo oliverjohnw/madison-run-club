@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Feed{% endblock %}
+{% block content %}
+<div class="hero">
+  <div>
+    <p class="kicker">Every logged run, newest first</p>
+    <h1 class="h1" style="margin-top:6px">The feed</h1>
+  </div>
+  <div class="row"><a class="btn ghost small" href="/club">Club stats</a><a class="btn blaze" href="/log">+ Log a run</a></div>
+</div>
+<div class="narrow" style="max-width:680px;margin:0">
+  {% if items %}
+  <div class="card flush">{% for item in items %}{{ ui.activity(item, user, "/feed") }}{% endfor %}</div>
+  {% else %}
+  <div class="empty">
+    {{ ui.moose("empty-moose") }}
+    <p style="margin:10px 0 14px">Quiet out here. Log a run and you're first on the board.</p>
+    <a class="btn blaze" href="/log">Log a run</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

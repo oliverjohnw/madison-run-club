@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit run" if run else "Log a run" }}{% endblock %}
+{% block content %}
+<div class="narrow">
+  <p class="kicker">{{ "Fix the details" if run else "Nice work" }}</p>
+  <h1 class="h1" style="margin:6px 0 18px">{{ "Edit run" if run else "Log a run" }}</h1>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+  <form method="post" action="{{ '/runs/%d/edit'|format(run.id) if run else '/log' }}" class="card">
+    <label class="field"><span>Which run?</span>
+      <select class="input" name="meetup_id">
+        <option value="">On my own time</option>
+        {% for m in choices %}
+        <option value="{{ m.id }}" {% if form.meetup_id == m.id|string %}selected{% endif %}>Club: {{ m.title }} · {{ m.date|day }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+      <label class="field"><span>Date</span><input class="input" type="date" name="date" required value="{{ form.date }}" max="{{ today.isoformat() }}" /></label>
+      <label class="field"><span>Distance (mi)</span><input class="input" id="distance" name="distance" required inputmode="decimal" placeholder="3.1" value="{{ form.distance or '' }}" /></label>
+      <label class="field"><span>Time</span><input class="input" id="time" name="time" required placeholder="28:30" value="{{ form.time or '' }}" autocomplete="off" /><small>mm:ss or h:mm:ss</small></label>
+    </div>
+
+    <div class="pace-preview">
+      <span class="kicker">Pace</span>
+      <span class="display" id="run-pace" style="font-size:2.4rem">–:––</span><span class="muted"> /mi</span>
+    </div>
+
+    <fieldset style="border:0;padding:0;margin:0 0 14px">
+      <legend class="field" style="margin-bottom:5px"><span>How'd it feel?</span></legend>
+      <div class="choices effort">
+        {% for k, label in EFFORTS.items() %}
+        <label class="choice"><input type="radio" name="effort" value="{{ k }}" {% if form.effort == k|string %}checked{% endif %} /><span><b>{{ k }}</b>{{ label }}</span></label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <label class="field"><span>Title <span class="muted" style="font-weight:400">(optional)</span></span><input class="input" name="title" maxlength="120" value="{{ form.title or '' }}" placeholder="We'll name it if you don't" /></label>
+    <label class="field"><span>Notes <span class="muted" style="font-weight:400">(optional)</span></span><textarea class="input" name="notes" maxlength="2000" placeholder="Hills? Geese? Spotted a wild Kade?">{{ form.notes or '' }}</textarea></label>
+
+    <div class="row between">
+      <button class="btn blaze" type="submit">{{ "Save" if run else "Log it" }}</button>
+      {% if run %}<a class="link small" href="/runs/{{ run.id }}">Cancel</a>{% endif %}
+    </div>
+  </form>
+
+  {% if run %}
+  <form method="post" action="/runs/{{ run.id }}/delete" style="margin-top:16px" onsubmit="return confirm('Delete this run for good?')">
+    <button class="btn danger small">Delete this run</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/pace.js"></script>{% endblock %}

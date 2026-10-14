@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+{% block content %}
+<div class="hero">
+  <div>
+    <p class="kicker">Only you see this page</p>
+    <h1 class="h1" style="margin-top:6px">Admin</h1>
+  </div>
+  <a class="btn" href="/admin/meetups/new">+ Add a meetup</a>
+</div>
+
+{% if temp %}
+<div class="note" style="margin-bottom:16px">
+  New password for <b>@{{ temp[0] }}</b>: <code style="font-family:var(--mono);font-size:1rem;background:var(--card);padding:2px 8px;border-radius:4px">{{ temp[1] }}</code>
+  &nbsp;Send it to them; they can change it in Settings. This won't be shown again.
+</div>
+{% endif %}
+
+<section id="members">
+  <div class="section-head"><h2 class="h2">Members</h2><span class="kicker">{{ members|length }} total</span></div>
+  <div class="card flush scroll-x">
+    <table class="table">
+      <thead><tr><th>Member</th><th>Email</th><th>Phone</th><th>Training</th><th>Runs</th><th>Quiz</th><th></th></tr></thead>
+      <tbody>
+        {% for m in members %}
+        <tr>
+          <td><a class="row" style="gap:8px;text-decoration:none;flex-wrap:nowrap" href="/u/{{ m.username }}">{{ ui.avatar(m, "sm") }}<span><b>{{ m.name }}</b><br><span class="tiny muted">@{{ m.username }}{% if m.is_admin %} · admin{% endif %}</span></span></a></td>
+          <td><a class="link" href="mailto:{{ m.email }}">{{ m.email }}</a></td>
+          <td style="white-space:nowrap">{% if m.phone %}<a class="link" href="tel:{{ m.phone }}">{{ m.phone }}</a>{% else %}<span class="muted">-</span>{% endif %}</td>
+          <td>{% if m.follows_plan and m.plan_key in plans %}{{ plans[m.plan_key].name }}<br><span class="tiny muted">{{ (m.goal_pace_sec|clock ~ "/mi") if m.goal_pace_sec else "finish" }}</span>{% elif m.training == "own" %}Own workouts{% else %}<span class="muted">not set up</span>{% endif %}</td>
+          <td class="tabular">{{ run_counts.get(m.id, 0) }}</td>
+          <td class="tiny muted" style="min-width:180px">{% for q, a in quiz[m.id] %}{{ a }}{{ " · " if not loop.last }}{% endfor %}</td>
+          <td style="white-space:nowrap">
+            <form method="post" action="/admin/members/{{ m.id }}/password" style="display:inline" onsubmit="return confirm('Reset @{{ m.username }}\'s password?')"><button class="btn ghost small">Reset password</button></form>
+            {% if m.id != user.id %}<form method="post" action="/admin/members/{{ m.id }}/delete" style="display:inline" onsubmit="return confirm('Remove @{{ m.username }} and all their runs? This can\'t be undone.')"><button class="btn danger small">Remove</button></form>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="tiny muted" style="margin-top:8px">Quiz answers: mile time · longest run · how often.</p>
+</section>
+
+<section class="section" id="race">
+  <div class="section-head"><h2 class="h2">Race day</h2></div>
+  <div class="card">
+    <div class="row" style="gap:24px">
+      {% for d, voters in votes.items() %}
+      <div><div class="kicker">{{ d|day }}</div><div class="display" style="font-size:2rem">{{ voters|length }}</div>
+        <div class="tiny muted">{% for v in voters %}{{ v.name }}{{ ", " if not loop.last }}{% endfor %}</div></div>
+      {% endfor %}
+    </div>
+    <form method="post" action="/admin/race" class="row" style="margin-top:16px">
+      <select class="input" name="choice" style="max-width:240px">
+        <option value="">Not locked (voting open)</option>
+        {% for d in votes %}<option value="{{ d.isoformat() }}" {% if locked == d %}selected{% endif %}>Lock in {{ d|day }}</option>{% endfor %}
+      </select>
+      <button class="btn">Save</button>
+    </form>
+    <p class="tiny muted" style="margin:8px 0 0">Locking adds the race to the schedule and closes voting.</p>
+  </div>
+</section>
+
+<section class="section" id="schedule">
+  <div class="section-head"><h2 class="h2">Schedule</h2><a class="link small" href="/schedule?past=1">All, including past</a></div>
+  <p class="small muted" style="margin-top:-6px">Change the date, time, place or description and hit Save. "More" has the title, event tag and cancel.</p>
+  {% if saved %}<div class="ok">Saved {{ saved }}.</div>{% endif %}
+  <div class="stack" style="--gap:10px">
+    {% for m in meetups %}
+    <form method="post" action="/admin/meetups/{{ m.id }}/quick" class="card tight quick-edit {{ 'canceled' if m.canceled }}">
+      <div class="qe-title">
+        <b>{{ m.title }}</b>
+        <span class="row" style="gap:4px;margin-top:2px">{% if m.slot == "club" %}<span class="pill main">club run</span>{% elif m.slot == "race" %}<span class="pill main">race</span>{% else %}<span class="pill">extra</span>{% endif %}{% if m.is_event %}<span class="pill gold">event</span>{% endif %}{% if m.canceled %}<span class="pill">canceled</span>{% endif %}</span>
+      </div>
+      <label class="field"><span class="tiny">Date</span><input class="input" type="date" name="date" required value="{{ m.date.isoformat() }}" /></label>
+      <label class="field"><span class="tiny">Time</span><input class="input" name="time_label" maxlength="20" value="{{ m.time_label }}" placeholder="6:00 PM" /></label>
+      <label class="field qe-where"><span class="tiny">Where</span><input class="input" name="location" maxlength="200" value="{{ m.location }}" placeholder="Olin Park, by the pavilion" /></label>
+      <div class="row qe-actions"><button class="btn small">Save</button><a class="link small" href="/admin/meetups/{{ m.id }}">More</a></div>
+      <label class="field qe-details"><span class="tiny">Description</span><textarea class="input" name="details" maxlength="4000" rows="2" placeholder="Where exactly we meet, the route, where we're going after...">{{ m.details }}</textarea></label>
+    </form>
+    {% else %}<div class="empty">Nothing upcoming. <a class="link" href="/admin/meetups/new">Add a meetup</a>.</div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# secrets
+.env
+
+# local SQLite database (created automatically on first run)
+*.db
+
+# editor/OS
+.DS_Store
+
+# local Claude Code settings + preview config
+.claude/

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}{{ "My plan" if mine else plan.name }}{% endblock %}
+{% block content %}
+{% if fresh %}
+<div class="ok pop">You're in. Here's your plan. First stop: <a class="link" href="/schedule">RSVP for the next club run</a>.</div>
+{% endif %}
+
+{% if not user.follows_plan %}
+<div class="card own-mode" style="margin-bottom:22px">
+  <div class="row between" style="align-items:flex-start">
+    <div style="flex:1;min-width:240px">
+      <p class="kicker">Your training</p>
+      <h1 class="h1" style="margin-top:6px">Your own thing</h1>
+      <p class="lede" style="margin-top:10px">Come to the club runs, run however you like in between, and log it all. The plans below are here if you want ideas.</p>
+    </div>
+    <div class="stack" style="--gap:8px;min-width:200px">
+      <a class="btn blaze" href="/welcome/quiz">Get a recommended plan</a>
+      <span class="tiny muted">Three questions, then a suggestion.</span>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="hero">
+  <div>
+    <p class="kicker">{{ "Your plan" if mine else ("Browsing" if not user.follows_plan else "Looking at another plan") }} · {{ weeks|length }} weeks · recommended, never required</p>
+    <h{{ 1 if user.follows_plan else 2 }} class="{{ 'h1' if user.follows_plan else 'h2' }}" style="margin-top:6px{% if not user.follows_plan %};font-size:2.4rem{% endif %}">{{ plan.name }}</h{{ 1 if user.follows_plan else 2 }}>
+    <p class="lede" style="margin-top:10px">{{ plan.blurb }}</p>
+  </div>
+  {% if mine %}
+  <div class="card tight" style="min-width:220px">
+    <div class="kicker">Goal</div>
+    {% if user.goal_pace_sec %}
+    <div class="display" style="font-size:2.6rem;margin-top:4px">{{ user.goal_pace_sec|clock }}<span class="muted" style="font-size:.45em">/mi</span></div>
+    <div class="small muted">{{ goal_5k }} for the 5K</div>
+    {% else %}
+    <div class="display" style="font-size:2.4rem;margin-top:4px">Finish it</div>
+    <div class="small muted">Any speed counts</div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="plan-tabs" style="margin-bottom:18px">
+  {% for k, p in plans.items() %}
+  {% set is_mine = user.follows_plan and k == user.plan_key %}
+  <a href="/plan{{ '' if is_mine else '?show=' ~ k }}" {% if k == key %}aria-current="page"{% endif %}>{{ p.name }} <span style="opacity:.6;font-weight:500">{{ p.anchor }}</span>{% if is_mine %} · yours{% endif %}</a>
+  {% endfor %}
+</div>
+
+{% if not mine %}
+<form method="post" action="/plan/goal" class="card tight row between" style="margin-bottom:16px">
+  <input type="hidden" name="choice" value="plan" /><input type="hidden" name="plan" value="{{ key }}" />
+  <span class="small">{{ "Want to follow this one?" if not user.follows_plan else "Want this one instead?" }} Your goal becomes {{ plan.anchor }}.</span>
+  <button class="btn small">{{ "Follow" if not user.follows_plan else "Switch to" }} {{ plan.name }}</button>
+</form>
+{% endif %}
+
+{% if zones %}
+<div class="card tight row" style="gap:10px 22px;margin-bottom:16px">
+  <span class="kicker">Your paces</span>
+  {% for name in ["goal", "tempo", "easy"] %}<span class="small">{{ zones[name] }}</span>{% endfor %}
+  <span class="small muted">Strides = 20 sec quick and relaxed, walk back</span>
+</div>
+{% endif %}
+
+{% if first_club and week_meetups and week_n < week_of(first_club.date) %}
+<div class="solo-banner">
+  {% set solo_until = week_of(first_club.date) - 1 %}
+  <span class="display" style="font-size:1.5rem">{{ "Week 1 is a solo week." if solo_until == 1 else "Weeks 1–" ~ solo_until ~ " are solo weeks." }}</span>
+  <span>The club doesn't meet until <a href="/meetups/{{ first_club.id }}"><b>{{ first_club.date|day }}</b></a>. Until then, it's on you (and whoever you can drag along).</span>
+</div>
+{% endif %}
+
+<div class="note" style="margin-bottom:16px">
+  <p><b>These are suggestions, not homework.</b> Skip any workout guilt-free, swap in your own run, or just come hang out.
+  Each week has one <b>club run</b> and two optional bonus runs on your own, any day.</p>
+  <p style="margin:0">Missed a week? Pick up with the last week you did instead of jumping ahead.</p>
+</div>
+
+<div class="card flush">
+  {% for w in weeks %}
+  {% set meetup = week_meetups.get(w.n) %}
+  <div class="plan-week {{ 'now' if w.n == week_n }} {{ 'past' if w.n < week_n }}" id="week-{{ w.n }}">
+    <div class="wk-label">
+      <div class="kicker">{{ w.start|short }}{% if w.n == week_n %} · this week{% endif %}</div>
+      <div class="display" style="font-size:1.9rem">Week {{ w.n }}</div>
+      <div class="small" style="margin-top:2px">{{ w.focus }}</div>
+      {% if not meetup %}<span class="pill solo-pill">Solo week</span>{% endif %}
+    </div>
+    {% for slot in ["club", "short", "long"] %}
+    {% set s = w.sessions[slot] %}
+    <div class="session {{ 'main' if slot == 'club' }}">
+      <div class="slot">
+        {% if slot == "club" %}
+          {% if meetup %}<a href="/meetups/{{ meetup.id }}" style="color:inherit">Club run · {{ meetup.date.strftime("%a") }} {{ meetup.date|short }}</a>{% else %}Main workout · on your own{% endif %}
+        {% else %}{{ SLOT_NAMES[slot] }} · on your own{% endif %}
+      </div>
+      {% if slot == "club" and not meetup %}
+      {% set nxt = next_club.get(w.n) %}
+      <div class="solo-note"><b>No club run this week.</b> Do this one solo, whenever works for you.{% if nxt %} {{ "First" if nxt == first_club else "Next" }} club run: <a href="/meetups/{{ nxt.id }}">{{ nxt.date|day }}</a>.{% endif %}</div>
+      {% endif %}
+      <div class="t">{{ s.title }} <span class="muted" style="font-weight:500;font-size:.85rem">· {{ s.est }}</span></div>
+      <div class="w">{{ ui.steps(s) }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+  <div class="plan-week" style="background:var(--ink);color:var(--paper)">
+    <div class="wk-label" style="background:transparent"><div class="display blaze" style="font-size:1.9rem">Race day</div></div>
+    <div style="grid-column:span 3">
+      <div class="h3">3.1 miles with the whole club.</div>
+      <div class="small" style="opacity:.8;margin-top:4px">
+        {% for d in race_dates %}{{ d|day }}{{ " or " if loop.revindex == 2 else (", " if not loop.last else "") }}{% endfor %}. <a class="link" style="color:inherit" href="/race">Vote on the day</a>.
+        {% if mine and user.goal_pace_sec %} Start a touch slower than {{ user.goal_pace_sec|clock }} for the first mile, then hold it.{% elif mine %} Start slower than you think. Walk breaks are allowed.{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if mine %}
+<div class="grid two section">
+  <div class="card">
+    <h3 class="h3">Change your goal</h3>
+    <p class="small muted">Moves you to whichever plan fits the new pace.</p>
+    {% if request.query_params.get("err") %}<div class="error">Type a pace like 8:30.</div>{% endif %}
+    <form method="post" action="/plan/goal" class="row" style="align-items:flex-end">
+      <input type="hidden" name="choice" value="custom" />
+      <label class="field" style="margin:0;flex:1;min-width:120px"><span>New goal pace</span><input class="input" id="pace" name="pace" placeholder="{{ user.goal_pace_sec|clock if user.goal_pace_sec else '9:00' }}" autocomplete="off" /></label>
+      <button class="btn small">Save</button>
+    </form>
+    <p class="tiny muted" id="pace-out" style="margin:6px 0 0"></p>
+    <div class="row" style="margin-top:12px">
+      <form method="post" action="/plan/goal"><input type="hidden" name="choice" value="finish" /><button class="btn ghost small">Just finish</button></form>
+      {% if suggestion %}<form method="post" action="/plan/goal"><input type="hidden" name="choice" value="accept" /><button class="btn ghost small">Back to suggested ({{ suggestion.label }})</button></form>{% endif %}
+      <a class="link small" href="/welcome/quiz">Retake the quiz</a>
+    </div>
+  </div>
+  <div class="card">
+    <h3 class="h3">Rather do your own thing?</h3>
+    <p class="small muted">Drop the plan. You can still browse them for ideas, and pick one back up any time.</p>
+    <form method="post" action="/plan/own"><button class="btn ghost small">Stop following a plan</button></form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="/static/pace.js"></script>{% endblock %}

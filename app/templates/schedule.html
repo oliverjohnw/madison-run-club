@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Schedule{% endblock %}
+{% block content %}
+<div class="hero">
+  <div>
+    <p class="kicker">One club run a week · then the 5K</p>
+    <h1 class="h1" style="margin-top:6px">Schedule</h1>
+  </div>
+  <div class="row">
+    {% if show_past %}<a class="btn ghost small" href="/schedule">Hide past runs</a>{% else %}<a class="btn ghost small" href="/schedule?past=1">Show past runs</a>{% endif %}
+    {% if user.is_admin %}<a class="btn small" href="/admin/meetups/new">+ Add a meetup</a>{% endif %}
+  </div>
+</div>
+
+<ul class="legend-list small muted">
+  <li><b>I'm in</b> = see you there.</li>
+  <li><b>On my own</b> = you'll do the run on your own time, not with the group.</li>
+  <li><b>Can't make it</b> = missing this one.</li>
+  <li class="hint">Click your answer again to clear it.</li>
+</ul>
+
+<div class="schedule-list">
+  {% for n, meetups in weeks %}
+  <section>
+    <div class="section-head">
+      <h2 class="h2">{% if n < 1 %}Before we start{% elif n > n_plan %}Race week{% else %}Week {{ n }}{% endif %}</h2>
+      {% if 1 <= n <= n_plan and user.follows_plan %}<span class="kicker">{{ plans[user.plan_key].weeks[n-1].focus }}</span>{% endif %}
+    </div>
+    <div class="stack" style="--gap:12px">
+      {% for m in meetups %}{{ ui.ticket(m, rsvps[m.id], users, user, "/schedule" ~ ("?past=1" if show_past else "")) }}{% endfor %}
+    </div>
+  </section>
+  {% else %}
+  <div class="empty">No upcoming runs. {% if user.is_admin %}<a class="link" href="/admin/meetups/new">Add one</a>.{% endif %}</div>
+  {% endfor %}
+
+  {% if not race_locked %}
+  <section>
+    <div class="section-head"><h2 class="h2">The 5K</h2></div>
+    <a class="countdown" href="/race" style="display:block;text-decoration:none">
+      <div class="kicker">Race day · not locked in yet</div>
+      <div class="display" style="font-size:2rem;margin-top:8px">
+        {% for d in race_dates %}{{ d.strftime("%a %b") }} {{ d.day }}{{ " / " if not loop.last }}{% endfor %}
+      </div>
+      <p class="small" style="margin:10px 0 0;opacity:.8"><span style="color:var(--blaze)">→</span> Vote on the day</p>
+    </a>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

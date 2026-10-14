@@ -1,0 +1,69 @@
+{# Hand-drawn charts. The numbers/coordinates come from app/stats.py. #}
+
+{% macro weekly_bars(b) -%}
+<div class="bars" role="img" aria-label="Miles per week">
+  {% for w in b.bars %}
+  <div class="bar {{ 'current' if w.current }} {{ 'future' if w.future and not w.miles }}" title="Week {{ w.n }} ({{ w.label }}): {{ w.miles|miles }} mi">
+    <span class="val">{% if w.miles %}{{ w.miles|miles }}{% endif %}</span>
+    <div class="fill" style="height:{{ (w.h * 100)|round(1) }}%;animation-delay:{{ loop.index0 * 50 }}ms"></div>
+    <span class="wk">{{ "Race" if loop.last else "Wk " ~ w.n }}</span>
+  </div>
+  {% endfor %}
+</div>
+{%- endmacro %}
+
+{% macro heatmap(h) -%}
+<div class="heat-wrap">
+  <div class="heat-labels">{% for r in h.rows %}<span>{{ r[:2] if loop.index is odd else "" }}</span>{% endfor %}</div>
+  <div class="heat" style="grid-template-columns:repeat({{ h.cols|length }}, minmax(0, 34px))">
+    {% for col in h.cols %}{% for c in col.cells %}
+    <i class="l{{ c.level }} {{ 'future' if c.future and not c.miles }} {{ 'today' if c.today }} {{ 'race' if c.race }}"
+       title="{{ c.date|day }}{% if c.miles %}: {{ c.miles|miles }} mi{% elif c.race %}: race day option{% endif %}"></i>
+    {% endfor %}{% endfor %}
+  </div>
+</div>
+<div class="row between" style="margin-top:10px">
+  <span class="legend">Less <i style="background:var(--heat-0)"></i><i style="background:var(--heat-1)"></i><i style="background:var(--heat-2)"></i><i style="background:var(--heat-3)"></i><i style="background:var(--heat-4)"></i> More</span>
+  <span class="legend"><i style="background:var(--blaze);border-radius:50%;width:8px;height:8px"></i> race day options</span>
+</div>
+{%- endmacro %}
+
+{% macro pace_trend(t) -%}
+<svg class="chart" viewBox="0 0 {{ t.width }} {{ t.height }}" role="img" aria-label="Pace per run">
+  <defs><linearGradient id="pace-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--lake)" stop-opacity=".22"/><stop offset="1" stop-color="var(--lake)" stop-opacity="0"/></linearGradient></defs>
+  {% for tk in t.ticks %}
+  <line x1="{{ t.x0 }}" x2="{{ t.x1 }}" y1="{{ tk.y }}" y2="{{ tk.y }}" stroke="var(--line)" stroke-dasharray="2 4"/>
+  <text x="{{ t.x0 - 8 }}" y="{{ tk.y + 3 }}" text-anchor="end">{{ tk.label }}</text>
+  {% endfor %}
+  <polygon points="{{ t.area }}" fill="url(#pace-fill)"/>
+  {% if t.goal_y %}
+  <line x1="{{ t.x0 }}" x2="{{ t.x1 }}" y1="{{ t.goal_y }}" y2="{{ t.goal_y }}" stroke="var(--blaze)" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="{{ t.x1 }}" y="{{ t.goal_y - 6 }}" text-anchor="end" style="fill:var(--blaze)">GOAL {{ t.goal }}</text>
+  {% endif %}
+  <polyline points="{{ t.line }}" fill="none" stroke="var(--lake)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+  {% for d in t.dots %}
+  <a href="/runs/{{ d.run.id }}"><circle cx="{{ d.x }}" cy="{{ d.y }}" r="4.5" fill="var(--card)" stroke="var(--lake)" stroke-width="2.5"><title>{{ d.run.date|day }} · {{ d.run.pace_sec|clock }}/mi · {{ d.run.distance_mi|miles }} mi</title></circle></a>
+  {% endfor %}
+  <text x="{{ t.x0 }}" y="{{ t.height - 4 }}">{{ t.dots[0].run.date|short }}</text>
+  <text x="{{ t.x1 }}" y="{{ t.height - 4 }}" text-anchor="end">{{ t.dots[-1].run.date|short }}</text>
+</svg>
+{%- endmacro %}
+
+{% macro board(rows) -%}
+{% set any = rows|selectattr("miles")|list %}
+{% if any %}
+<ol class="board">
+  {% for r in rows if r.miles %}
+  <li>
+    <span class="rank">{{ loop.index }}</span>
+    <a href="/u/{{ r.user.username }}">{{ ui.avatar(r.user, "sm") }}</a>
+    <div style="min-width:0">
+      <div class="row between" style="flex-wrap:nowrap"><a href="/u/{{ r.user.username }}" style="text-decoration:none;font-weight:600">{{ r.user.name }}</a><span class="tiny muted">{{ r.runs }} run{{ 's' if r.runs != 1 }}</span></div>
+      <div class="track"><div style="width:{{ (r.share * 100)|round(1) }}%"></div></div>
+    </div>
+    <span class="mi">{{ r.miles|miles }}</span>
+  </li>
+  {% endfor %}
+</ol>
+{% else %}<p class="small muted" style="margin:0">Nobody yet. Wide open.</p>{% endif %}
+{%- endmacro %}

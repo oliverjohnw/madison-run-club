@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}The club{% endblock %}
+{% block content %}
+<div class="hero">
+  <div>
+    <p class="kicker">{{ members|length }} member{{ 's' if members|length != 1 }} · all speeds</p>
+    <h1 class="h1" style="margin-top:6px">The herd</h1>
+  </div>
+</div>
+
+<div class="stats three">
+  <div class="stat"><div class="num">{{ total_miles|miles }}<small>mi</small></div><div class="lbl">Club miles</div></div>
+  <div class="stat"><div class="num">{{ total_runs }}</div><div class="lbl">Runs logged</div></div>
+  <div class="stat"><div class="num">{{ (total_seconds / 3600)|round(1) }}<small>hr</small></div><div class="lbl">Time on feet</div></div>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <div class="card-head">
+    <h3 class="h3">Road trip: {{ journey.name }}</h3>
+    <span class="kicker">{% if journey.laps %}Lap {{ journey.laps + 1 }} · {% endif %}{{ "%.0f"|format(journey.to_next) }} mi to {{ journey.next }}</span>
+  </div>
+  <p class="small muted" style="margin-top:-6px">Every mile anyone logs moves the moose closer to Green Bay.</p>
+  <div class="journey">
+    <div class="road"></div>
+    <div class="done" style="width:{{ (journey.progress * 100)|round(2) }}%"></div>
+    {% for s in journey.stops %}
+    <div class="stop {{ 'passed' if s.passed }}" style="left:{{ (s.at * 100)|round(2) }}%"><i></i><span>{{ s.name }}<em>{{ s.mi }} mi</em></span></div>
+    {% endfor %}
+    <div class="moose" style="left:{{ (journey.progress * 100)|round(2) }}%">{{ ui.moose("", "Club progress") }}</div>
+  </div>
+</div>
+
+<div class="grid two section">
+  <div class="card">
+    <div class="card-head"><h3 class="h3">This week</h3><span class="kicker">miles</span></div>
+    {{ viz.board(board_week) }}
+  </div>
+  <div class="card">
+    <div class="card-head"><h3 class="h3">All time</h3><span class="kicker">miles</span></div>
+    {{ viz.board(board_all) }}
+  </div>
+</div>
+
+<div class="card section">
+  <div class="card-head"><h3 class="h3">Turnout</h3>
+    <span class="legend"><i style="background:var(--line-2)"></i> said they'd come <i style="background:var(--blaze);margin-left:8px"></i> logged it</span></div>
+  {% if turnout.rows %}
+  <div class="turnout-chart">
+    <div class="turnout-y" aria-hidden="true">
+      {% for tk in turnout.ticks %}<span style="bottom:calc(var(--base) + {{ tk.h|round(4) }} * var(--plot))">{{ tk.v }}</span>{% endfor %}
+      <em>people</em>
+    </div>
+    <div class="turnout-plot scroll-x">
+      {% for tk in turnout.ticks %}<i class="grid" style="bottom:calc(var(--base) + {{ tk.h|round(4) }} * var(--plot))"></i>{% endfor %}
+  <div class="turnout">
+    {% for t in turnout.rows %}
+    <a class="col" href="/meetups/{{ t.meetup.id }}" title="{{ t.meetup.title }} · {{ t.meetup.date|day }}: {{ t.said }} said in, {{ t.logged }} logged">
+      <div class="pair">
+        <div style="height:{{ (t.said_h * 100)|round(1) }}%;background:var(--line-2)"></div>
+        <div style="height:{{ (t.logged_h * 100)|round(1) }}%;background:{{ 'var(--blaze)' if t.meetup.slot == 'club' else 'var(--pine)' }}"></div>
+      </div>
+      <span>{{ t.meetup.date.strftime("%a")[:2] }}<br>{{ t.meetup.date.month }}/{{ t.meetup.date.day }}</span>
+    </a>
+    {% endfor %}
+  </div>
+    </div>
+  </div>
+  {% else %}<p class="small muted" style="margin:0">Fills in after the first meetup.</p>{% endif %}
+</div>
+
+<div class="card section">
+  <div class="card-head"><h3 class="h3">Everybody's miles, every day</h3></div>
+  {{ viz.heatmap(heat) }}
+</div>
+
+<section class="section">
+  <div class="section-head"><h2 class="h2">Members</h2></div>
+  <div class="members">
+    {% for m in members %}
+    <a class="card tight member" href="/u/{{ m.username }}">
+      {{ ui.avatar(m, "lg") }}
+      <div style="min-width:0">
+        <div style="font-weight:700">{{ m.name }}</div>
+        <div class="small muted">@{{ m.username }}</div>
+        {% if m.plan_key in plans %}<span class="pill pine" style="margin-top:6px">{{ plans[m.plan_key].name }}</span>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

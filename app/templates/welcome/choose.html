@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Welcome{% endblock %}
+{% block content %}
+<div class="narrow">
+  {% include "welcome/_steps.html" %}
+  <h1 class="h1" style="margin:6px 0 10px">Hey {{ user.first_name }}.<br>How do you want to train?</h1>
+  <p class="lede">We meet up once a week. What you do the rest of the week is up to you. You can change this any time.</p>
+  {% if error %}<div class="error" style="margin-top:16px">{{ error }}</div>{% endif %}
+  <form method="post" action="/welcome" style="margin-top:22px">
+    <div class="stack" style="--gap:12px">
+      <label class="plan-pick">
+        <input type="radio" name="training" value="plan" required class="sr-only" {% if user.training == "plan" %}checked{% endif %} />
+        <span class="plan-pick-head"><span class="display" style="font-size:1.8rem">Give me a plan</span></span>
+        <span class="small muted" style="display:block;margin-top:4px">Three quick questions, then we'll suggest a 6 week plan built around the weekly run club. Suggestions only! Feel free to skip anything, anytime.</span>
+      </label>
+      <label class="plan-pick">
+        <input type="radio" name="training" value="own" required class="sr-only" {% if user.training == "own" %}checked{% endif %} />
+        <span class="plan-pick-head"><span class="display" style="font-size:1.8rem">I'll do my own thing</span></span>
+        <span class="small muted" style="display:block;margin-top:4px">Come to the club runs and do it your way. Run, walk, show up and bring the good vibes. You can browse plans for ideas whenever.</span>
+      </label>
+    </div>
+    <button class="btn blaze" style="margin-top:18px">Next →</button>
+  </form>
+</div>
+{% endblock %}

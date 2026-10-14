@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Profile picture{% endblock %}
+{% block content %}
+<div class="narrow">
+  {% include "welcome/_steps.html" %}
+  <h1 class="h1" style="margin:6px 0 10px">Add a profile picture</h1>
+  <p class="lede">So people can see who's coming on the schedule. Optional, and you can change it later in Settings.</p>
+  {% if error %}<div class="error" style="margin-top:16px">{{ error }}</div>{% endif %}
+
+  <div class="card" style="margin-top:20px;text-align:center;padding:28px 18px">
+    <div style="display:flex;justify-content:center">{{ ui.avatar(user, "xl") }}</div>
+    <form method="post" action="/settings/avatar?next=/welcome/photo" enctype="multipart/form-data" style="margin-top:18px">
+      <label class="btn ghost" style="cursor:pointer">
+        {{ "Choose a different photo" if user.has_avatar else "Choose a photo" }}
+        <input type="file" name="photo" accept="image/*" required class="sr-only" onchange="this.form.submit()" />
+      </label>
+      <noscript><button class="btn small" style="margin-left:8px">Upload</button></noscript>
+    </form>
+    {% if user.has_avatar %}<p class="small" style="margin:12px 0 0;color:var(--pine);font-weight:600">Looking good.</p>{% endif %}
+  </div>
+
+  <form method="post" action="/welcome/done" class="row" style="margin-top:20px">
+    <button class="btn blaze">{{ "Show me my plan →" if user.training == "plan" else "All done →" }}</button>
+    {% if not user.has_avatar %}<span class="small muted">or skip it for now</span>{% endif %}
+  </form>
+</div>
+{% endblock %}

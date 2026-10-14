@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+{% if fresh %}<div class="ok pop">You're in. First stop: RSVP for the next club run below.</div>{% endif %}
+<div class="hero">
+  <div>
+    <p class="kicker">
+      {% if week_n < 1 %}Club starts {{ cfg.start_date|rel|lower if (cfg.start_date - today).days < 2 else cfg.start_date|day }}
+      {% else %}Week {{ week_n }} · {{ today|day }}{% endif %}
+    </p>
+    <h1 class="h1" style="margin-top:6px">Hey, {{ user.first_name }}</h1>
+  </div>
+  <a class="btn blaze" href="/log">+ Log a run</a>
+</div>
+
+<div class="grid main-side">
+  <div class="stack" style="--gap:28px">
+
+    <section>
+      <div class="section-head"><h2 class="h2">Next up</h2><a class="link small" href="/schedule">Full schedule</a></div>
+      <div class="stack" style="--gap:12px">
+        {% for m in upcoming %}{{ ui.ticket(m, rsvps[m.id], users, user, "/") }}
+        {% else %}<div class="empty">Nothing on the schedule yet.</div>{% endfor %}
+      </div>
+    </section>
+
+    {% if not user.follows_plan %}
+    <section>
+      <div class="card row between">
+        <div style="flex:1;min-width:220px"><div class="h3">Doing your own thing</div><p class="small muted" style="margin:2px 0 0">Log your runs and we'll track the rest. Want ideas? The plans are there whenever.</p></div>
+        <a class="btn ghost small" href="/plan">Browse plans</a>
+      </div>
+    </section>
+    {% endif %}
+
+    <section>
+      <div class="section-head"><h2 class="h2">Lately</h2><a class="link small" href="/feed">Everything</a></div>
+      {% if feed %}
+      <div class="card flush">{% for item in feed %}{{ ui.activity(item, user, "/") }}{% endfor %}</div>
+      {% else %}
+      <div class="empty">Nobody's logged a run yet. First one gets bragging rights.</div>
+      {% endif %}
+    </section>
+  </div>
+
+  <aside class="stack" style="--gap:16px">
+    <a class="countdown" href="/race" style="display:block;text-decoration:none">
+      <svg class="topo" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 100c0-50 40-80 80-80s80 30 80 80-40 80-80 80-80-30-80-80z"/><path d="M45 100c0-35 25-58 55-58s55 23 55 58-25 58-55 58-55-23-55-58z"/><path d="M70 100c0-20 13-35 30-35s30 15 30 35-13 35-30 35-30-15-30-35z"/><path d="M90 100c0-7 4-12 10-12s10 5 10 12-4 12-10 12-10-5-10-12z"/></svg>
+      <div class="kicker">{{ "Race day" if race.locked else "Race day (earliest option)" }}</div>
+      <div class="row" style="align-items:flex-end;gap:10px;margin-top:8px">
+        <span class="num">{{ race.days if race.days >= 0 else 0 }}</span>
+        <span class="display" style="font-size:1.4rem;padding-bottom:4px">day{{ 's' if race.days != 1 }}<br>to the 5K</span>
+      </div>
+      <p class="small" style="margin:12px 0 0;opacity:.8">
+        {% if race.locked %}{{ race.date|day }}. It's locked in.
+        {% elif voted %}You voted {{ voted.choice|day }}. Waiting on the rest.
+        {% else %}<span style="color:var(--blaze)">→</span> We haven't picked the day. Go vote.{% endif %}
+      </p>
+    </a>
+
+    <div class="card">
+      <div class="card-head"><h3 class="h3">You</h3><a class="link small" href="/u/{{ user.username }}">Your stats</a></div>
+      <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat"><div class="num">{{ s.week_miles|miles }}</div><div class="lbl">mi this week</div></div>
+        <div class="stat"><div class="num">{{ s.week_streak }}</div><div class="lbl">week streak</div></div>
+        <div class="stat"><div class="num">{{ s.miles|miles }}</div><div class="lbl">total mi</div></div>
+      </div>
+      {% if s.best_5k %}<p class="small muted" style="margin:12px 0 0">Based on your best run, you're on track for a <b style="color:var(--ink)">{{ s.best_5k|clock }}</b> 5K.</p>{% endif %}
+    </div>
+
+    <a class="card" href="/club" style="display:block;text-decoration:none">
+      <div class="kicker">The whole club, this week</div>
+      <div class="row" style="gap:18px;margin-top:8px">
+        <div><span class="display" style="font-size:2.6rem">{{ club_week.miles|miles }}</span> <span class="muted small">miles</span></div>
+        <div><span class="display" style="font-size:2.6rem">{{ club_week.runners }}</span> <span class="muted small">runner{{ 's' if club_week.runners != 1 }}</span></div>
+      </div>
+      <p class="small muted" style="margin:6px 0 0">Leaderboard, the road trip to Lambeau, and more →</p>
+    </a>
+  </aside>
+</div>
+{% endblock %}

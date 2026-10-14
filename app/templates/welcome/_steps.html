@@ -1,0 +1,2 @@
+<div class="steps" aria-label="Step {{ step }} of {{ total }}">{% for i in range(1, total + 1) %}<i class="{{ 'on' if i <= step }}"></i>{% endfor %}</div>
+<p class="kicker">Step {{ step }} of {{ total }}</p>

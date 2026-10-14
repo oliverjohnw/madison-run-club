@@ -1,0 +1,55 @@
+# Club-wide settings. The site re-reads this file on every page load, so edits
+# show up on refresh (no restart needed).
+
+name: Madison Moosehead Run Club
+short_name: Moosehead
+timezone: America/Chicago
+
+# Day one of the training plans. Plan weeks run 7 days from here (Tue-Mon).
+start_date: 2026-10-13
+
+race:
+  distance_mi: 3.107
+  # The three days people vote on. Lock one in from the Admin page.
+  options: [2026-11-22, 2026-11-23, 2026-11-24]
+  time_label: "9:00 AM"
+  location: "TBD"
+
+# One club run a week. HEADS UP: this list is only read ONCE, when the
+# database has no meetups yet (a brand-new site). Editing it afterwards does
+# nothing to a running site - change dates, times, places and descriptions on
+# the Admin page instead (Admin > Schedule).
+meetups:
+  - date: 2026-10-22
+    title: Club Run
+    time: "6:00 PM"
+    location: Wilsons Bar (Atwood Area)
+    event: true   # gold "Event" tag
+    details: |
+      We'll meet up at Ulbrich Park and get a workout in running around the Atwood neighborhood. Every speed welcome.
+
+      Afterwards it's over to Wilsons to catch the 1st half of Thursday Night Football (Patriots @ Bears).
+  - date: 2026-10-31
+    title: Club Run
+    time: "8:00 AM"
+    location: Lakeside St. Coffee
+    details: |
+      We'll meet at a park around Lakeside St. Coffee and get our workout in while the morning's still quiet.
+
+      Coffee to follow!
+  - {date: 2026-11-04, title: "Club Run", time: "6:00 PM", location: "Location TBD"}
+  - {date: 2026-11-11, title: "Club Run", time: "6:00 PM", location: "Location TBD"}
+  - {date: 2026-11-19, title: "Club Run", time: "6:00 PM", location: "Location TBD"}
+
+# Everybody's logged miles, added up, as a road trip. Distances are rough
+# driving miles from Madison; swap in any route you like.
+journey:
+  name: Madison to Lambeau
+  stops:
+    - {name: Madison, mi: 0}
+    - {name: Sun Prairie, mi: 12}
+    - {name: Beaver Dam, mi: 42}
+    - {name: Fond du Lac, mi: 70}
+    - {name: Oshkosh, mi: 90}
+    - {name: Appleton, mi: 110}
+    - {name: Lambeau Field, mi: 137}

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}{{ person.name }}{% endblock %}
+{% block content %}
+<div class="bib">
+  <div class="band"></div>
+  <div class="row" style="gap:22px;align-items:center">
+    {{ ui.avatar(person, "xl") }}
+    <div style="flex:1;min-width:220px">
+      <div class="bib-num">{{ "%02d"|format(person.id) }}<span>.</span></div>
+      <h1 class="display" style="font-size:2.2rem;margin-top:6px">{{ person.name }}</h1>
+      <div class="small muted">@{{ person.username }}{% if person.tagline %} · {{ person.tagline }}{% endif %}</div>
+      <div class="row" style="gap:6px;margin-top:10px">
+        {% if plan and person.follows_plan %}<a href="/plan?show={{ person.plan_key }}" class="pill pine" style="text-decoration:none">{{ plan.name }}</a>{% endif %}
+        {% if person.follows_plan %}<span class="pill">{{ (person.goal_pace_sec|clock ~ "/mi goal") if person.goal_pace_sec else "Goal: finish" }}</span>{% endif %}
+        {% if person.training == "own" %}<span class="pill">Own workouts</span>{% endif %}
+      </div>
+    </div>
+    {% if is_me %}
+    <div class="row" style="align-self:flex-start">
+      <a class="btn ghost small" href="/settings">Settings</a>
+      <form method="post" action="/logout"><button class="btn ghost small">Log out</button></form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if user.is_admin and not is_me %}
+<div class="private" style="margin-top:18px;padding-bottom:14px">
+  <div class="row" style="gap:28px">
+    <div><div class="kicker">Email</div><div><a class="link" href="mailto:{{ person.email }}">{{ person.email or "-" }}</a></div></div>
+    <div><div class="kicker">Phone</div><div>{% if person.phone %}<a class="link" href="tel:{{ person.phone }}">{{ person.phone }}</a>{% else %}-{% endif %}</div></div>
+    <div><div class="kicker">Joined</div><div>{{ person.created_at.date()|day if person.created_at else "-" }}</div></div>
+  </div>
+  {% if quiz_answers %}<div class="small muted" style="margin-top:10px">{% for q, a in quiz_answers %}{{ q }} <b style="color:var(--ink)">{{ a }}</b>{{ " · " if not loop.last }}{% endfor %}</div>{% endif %}
+</div>
+{% endif %}
+
+<div class="stats four" style="margin-top:20px">
+  <div class="stat"><div class="num">{{ s.miles|miles }}<small>mi</small></div><div class="lbl">Total distance</div></div>
+  <div class="stat"><div class="num">{{ s.runs }}</div><div class="lbl">Runs · {{ s.club_runs }} with the club</div></div>
+  <div class="stat"><div class="num">{{ s.avg_pace|clock if s.avg_pace else "-" }}<small>/mi</small></div><div class="lbl">Average pace</div></div>
+  <div class="stat"><div class="num">{{ s.week_streak }}<small>wk</small></div><div class="lbl">Streak</div></div>
+</div>
+
+<div class="grid two" style="margin-top:16px">
+  <div class="card">
+    <div class="kicker">5K readiness</div>
+    {% set pct = [s.longest / 3.107, 1]|min %}
+    <div class="row between" style="margin-top:10px;align-items:baseline">
+      <span><span class="display" style="font-size:2.2rem">{{ "%.1f"|format(s.longest) }}</span> <span class="muted small">of 3.1 mi longest run</span></span>
+      <span class="display {{ 'blaze' if pct >= 1 }}" style="font-size:1.4rem">{{ (pct * 100)|round|int }}%</span>
+    </div>
+    <div class="readiness"><div style="width:{{ (pct * 100)|round(1) }}%"></div><span style="left:100%"></span></div>
+    <p class="small muted" style="margin:10px 0 0">
+      {% if pct >= 1 %}Already covered the distance. Race day is just a victory lap.
+      {% elif s.runs %}{{ "%.1f"|format(3.107 - s.longest) }} more miles in one go and you've done the distance.
+      {% else %}No runs logged yet.{% endif %}
+    </p>
+  </div>
+  <div class="card">
+    <div class="kicker">Projected 5K</div>
+    {% if s.best_5k %}
+    <div class="display" style="font-size:3rem;margin-top:8px">{{ s.best_5k|clock }}</div>
+    <p class="small muted" style="margin:4px 0 0">
+      From the best run of a mile or more.
+      {% if person.goal_pace_sec %}Goal is {{ (person.goal_pace_sec * 3.107)|clock }}
+        {% if s.best_5k <= person.goal_pace_sec * 3.107 %}. <b class="pine">Already there.</b>{% else %} ({{ (s.best_5k - person.goal_pace_sec * 3.107)|clock }} to go).{% endif %}
+      {% endif %}
+    </p>
+    {% else %}
+    <div class="display muted" style="font-size:3rem;margin-top:8px">--:--</div>
+    <p class="small muted" style="margin:4px 0 0">Log a run of a mile or more to see this.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid two" style="margin-top:16px">
+  <div class="card">
+    <div class="card-head"><h3 class="h3">Miles per week</h3><span class="kicker">orange = this week</span></div>
+    {{ viz.weekly_bars(bars) }}
+  </div>
+  <div class="card">
+    <div class="card-head"><h3 class="h3">Every day of the plan</h3></div>
+    {{ viz.heatmap(heat) }}
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <div class="card-head"><h3 class="h3">Pace, run by run</h3><span class="kicker">higher = faster</span></div>
+  {% if trend %}{{ viz.pace_trend(trend) }}{% else %}<p class="small muted" style="margin:0">Shows up after two runs.</p>{% endif %}
+</div>
+
+<section class="section">
+  <div class="section-head"><h2 class="h2">Patches</h2><span class="kicker">{{ s.badges|selectattr("earned")|list|length }} of {{ s.badges|length }}</span></div>
+  <div class="card"><div class="patches">{% for b in s.badges %}{{ ui.patch(b) }}{% endfor %}</div></div>
+</section>
+
+<div class="grid main-side section">
+  <section>
+    <div class="section-head"><h2 class="h2">Recent runs</h2></div>
+    {% if recent %}<div class="card flush">{% for item in recent %}{{ ui.activity(item, user, "/u/" ~ person.username) }}{% endfor %}</div>
+    {% else %}<div class="empty">No runs yet.</div>{% endif %}
+  </section>
+  <aside>
+    <div class="section-head"><h2 class="h2">Coming up</h2></div>
+    <div class="card tight">
+      {% for m in going %}
+      <a href="/meetups/{{ m.id }}" class="row between" style="text-decoration:none;padding:6px 0">
+        <span><b>{{ m.title }}</b><br><span class="small muted">{{ m.date|rel }}{% if m.time_label %} · {{ m.time_label }}{% endif %}</span></span>
+        <span class="pill {{ 'main' if m.slot in ('club', 'race') }}">In</span>
+      </a>
+      {% else %}<p class="small muted" style="margin:0">No RSVPs in the next two weeks.</p>{% endfor %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

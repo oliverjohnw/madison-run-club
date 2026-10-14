@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ m.title }}{% endblock %}
+{% block content %}
+<p class="kicker"><a class="link" href="/schedule">← Schedule</a>{% if 1 <= week_n %} · Week {{ week_n }}{% endif %}</p>
+
+<div class="grid main-side" style="margin-top:14px">
+  <div class="stack" style="--gap:24px">
+    <div>
+      <div class="row" style="gap:6px;margin-bottom:8px">
+        {% if m.slot == "club" %}<span class="pill main">Club run</span>{% elif m.slot == "race" %}<span class="pill main">Race day</span>{% else %}<span class="pill">Extra</span>{% endif %}
+        {% if m.is_event %}<span class="pill gold">Event</span>{% endif %}
+        {% if m.canceled %}<span class="pill">Canceled</span>{% endif %}
+      </div>
+      <h1 class="h1" {% if m.canceled %}style="text-decoration:line-through"{% endif %}>{{ m.title }}</h1>
+      <div class="runstats" style="margin-top:16px">
+        <div><div class="lbl">When</div><div class="num" style="font-size:1.4rem">{{ m.date|day }}{% if m.time_label %} · {{ m.time_label }}{% endif %}</div></div>
+        <div><div class="lbl">Where</div><div class="num" style="font-size:1.4rem">{{ m.location or "TBD" }}</div></div>
+      </div>
+      {% if m.location and m.location != "Location TBD" and m.location != "TBD" %}
+      <p style="margin-top:10px"><a class="link small" href="https://www.google.com/maps/search/?api=1&query={{ (m.location ~ ', Madison WI')|urlencode }}" target="_blank" rel="noopener">Open in Maps ↗</a></p>
+      {% endif %}
+      {% if m.details %}<div class="card" style="margin-top:16px;white-space:pre-line">{{ m.details }}</div>{% endif %}
+      {% if user.is_admin %}<p style="margin-top:12px"><a class="btn ghost small" href="/admin/meetups/{{ m.id }}">Edit date, time, place</a></p>{% endif %}
+    </div>
+
+    {% if not m.canceled %}
+    <div class="card">
+      <div class="h3" style="margin-bottom:10px">You coming?</div>
+      {{ ui.rsvp_buttons(m, rsvps["by_user"].get(user.id), "/meetups/" ~ m.id) }}
+      {% if m.date <= today %}<p style="margin:14px 0 0"><a class="btn blaze small" href="/log?meetup={{ m.id }}">Log this run</a></p>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if workouts %}
+    <section>
+      <div class="section-head"><h2 class="h2">What everyone's running</h2></div>
+      <p class="small muted" style="margin-top:-6px">Same loop, different workouts. It's all by time, so the group finishes around the same time.</p>
+      <div class="stack" style="--gap:10px">
+        {% for w in workouts %}
+        <div class="card tight session main" {% if w.mine %}style="border:2px solid var(--pine)"{% endif %}>
+          <div class="slot">{{ w.plan.name }} · {{ w.plan.anchor }}{% if w.mine %} <span class="pill pine">You</span>{% endif %}</div>
+          <div class="t">{{ w.session.title }}</div>
+          <div class="w">{{ ui.steps(w.session) }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+
+  <aside class="stack" style="--gap:16px">
+    {% for key, label in [("in", "Coming"), ("solo", "On their own time"), ("out", "Can't make it")] %}
+    <div class="card tight">
+      <div class="card-head" style="margin-bottom:8px"><h3 class="h3">{{ label }}</h3><span class="display" style="font-size:1.4rem">{{ rsvps[key]|length }}</span></div>
+      {% if rsvps[key] %}
+      <ul style="list-style:none;margin:0;padding:0" class="stack">
+        {% for p in rsvps[key]|people(users) %}
+        <li class="row" style="gap:10px;--gap:8px"><a href="/u/{{ p.username }}">{{ ui.avatar(p, "sm") }}</a><a href="/u/{{ p.username }}" style="text-decoration:none;font-weight:600">{{ p.name }}</a></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="small muted" style="margin:0">Nobody yet.</p>{% endif %}
+    </div>
+    {% endfor %}
+    {% if logged %}
+    <div class="card tight">
+      <div class="card-head" style="margin-bottom:8px"><h3 class="h3">Logged it</h3></div>
+      {% for r in logged %}
+      <a href="/runs/{{ r.id }}" class="row between" style="text-decoration:none;padding:6px 0">
+        <span class="row" style="gap:8px">{{ ui.avatar(users.get(r.user_id), "xs") }} {{ users.get(r.user_id).name }}</span>
+        <span class="tabular small">{{ "%.2f"|format(r.distance_mi) }} mi · {{ r.pace_sec|clock }}/mi</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>{% block title %}{{ cfg.short_name }}{% endblock %} · Moosehead RC</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <meta name="theme-color" content="#1f4a37" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Mono:wght@500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/club.css?v=14" />
+  {% block head %}{% endblock %}
+</head>
+<body>
+  {% set path = request.url.path %}
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/">
+        {{ ui.crest() }}
+        <span class="brand-words">
+          <span class="brand-name">Moosehead</span>
+          <span class="brand-sub">Madison · Run Club</span>
+        </span>
+      </a>
+      {% if user and user.onboarded %}
+      <nav class="nav" aria-label="Main">
+        {% for href, label in [("/", "Home"), ("/schedule", "Schedule"), ("/plan", "My plan"), ("/feed", "Feed"), ("/club", "Club")] %}
+        <a href="{{ href }}" {% if (path == href) or (href != "/" and path.startswith(href)) %}aria-current="page"{% endif %}>{{ label }}</a>
+        {% endfor %}
+        {% if user.is_admin %}<a href="/admin" {% if path.startswith("/admin") %}aria-current="page"{% endif %}>Admin</a>{% endif %}
+        <a class="log-btn" href="/log">+ Log a run</a>
+        <a class="me-chip" href="/u/{{ user.username }}" title="Your profile">{{ ui.avatar(user, "sm") }}</a>
+      </nav>
+      <a class="me-mobile" href="/u/{{ user.username }}" title="Your profile">{{ ui.avatar(user, "sm") }}</a>
+      {% elif user %}
+      <form method="post" action="/logout"><button class="btn ghost small" style="color:inherit;border-color:currentColor">Log out</button></form>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if user and user.onboarded %}
+  <nav class="tabbar" aria-label="Main">
+    <a href="/" {% if path == "/" %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</a>
+    <a href="/schedule" {% if path.startswith("/schedule") or path.startswith("/meetups") %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Schedule</a>
+    <a class="tab-log" href="/log"><span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>Log</a>
+    <a href="/plan" {% if path.startswith("/plan") %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/></svg>Plan</a>
+    <a href="/feed" {% if path.startswith("/feed") or path.startswith("/runs") or path.startswith("/club") %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>Feed</a>
+  </nav>
+  {% endif %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

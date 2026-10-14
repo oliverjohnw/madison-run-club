@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Your goal{% endblock %}
+{% block content %}
+<div class="narrow">
+  {% include "welcome/_steps.html" %}
+  <h1 class="h1" style="margin:6px 0 16px">Here's what we'd aim for</h1>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+  <div class="card pop" style="border:2px solid var(--pine);padding:22px">
+    <div class="kicker">Suggested 5K goal</div>
+    {% if s.pace_sec %}
+    <div class="display" style="font-size:4.6rem;margin:8px 0 4px">{{ s.pace_sec|clock }}<span class="muted" style="font-size:.4em">/mi</span></div>
+    <p class="muted" style="margin:0">About <b style="color:var(--ink)">{{ (s.pace_sec * 3.107)|clock }}</b> for the 5K.</p>
+    {% else %}
+    <div class="display" style="font-size:4rem;margin:8px 0 4px">Just finish</div>
+    <p class="muted" style="margin:0">Run some, walk some, cross the line. If you jog most of it, probably somewhere around {{ s.five_k }}.</p>
+    {% endif %}
+    <hr class="rule" />
+    <div class="row" style="align-items:baseline">
+      <span class="pill pine">{{ plan.name }} plan</span>
+      <span class="small muted" style="flex:1;min-width:200px">{{ plan.blurb }}</span>
+    </div>
+    <form method="post" action="/welcome/goal" style="margin-top:16px">
+      <input type="hidden" name="choice" value="accept" />
+      <button class="btn blaze">Sounds right</button>
+    </form>
+  </div>
+
+  <section style="margin-top:26px">
+    <div class="section-head"><h2 class="h2">Or pick a plan</h2></div>
+    <form method="post" action="/welcome/goal">
+      <input type="hidden" name="choice" value="plan" />
+      <div class="stack" style="--gap:10px">
+        {% for key, p in plans.items() %}
+        <label class="plan-pick {{ 'suggested' if key == s.plan_key }}">
+          <input type="radio" name="plan" value="{{ key }}" required class="sr-only" />
+          <span class="plan-pick-head">
+            <span class="display" style="font-size:1.6rem">{{ p.name }}</span>
+            <span class="pill {{ 'pine' if key == s.plan_key else '' }}">{{ p.anchor }}{% if key == s.plan_key %} · suggested{% endif %}</span>
+          </span>
+          <span class="small muted" style="display:block;margin-top:4px">{{ p.blurb }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      <p class="tiny muted" style="margin:8px 0 12px">Picking a plan sets your goal to its pace (e.g. Chase It = 9:00/mi). You can fine-tune it on your plan page later.</p>
+      <button class="btn">Confirm plan</button>
+    </form>
+  </section>
+
+  <div class="card" style="margin-top:20px">
+    <div class="h3" style="margin-bottom:4px">Rather type your own pace?</div>
+    <p class="small muted">The pace you want to hold for 3.1 miles. We'll match you to the closest plan.</p>
+    <form method="post" action="/welcome/goal" class="row" style="align-items:flex-end">
+      <input type="hidden" name="choice" value="custom" />
+      <label class="field" style="margin:0;flex:1;min-width:140px"><span>Goal pace (min:sec per mile)</span>
+        <input class="input" name="pace" placeholder="8:30" value="{{ pace or '' }}" id="pace" autocomplete="off" /></label>
+      <button class="btn">Use this pace</button>
+    </form>
+    <p class="tiny muted" id="pace-out" style="margin:8px 0 0"></p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/pace.js"></script>{% endblock %}

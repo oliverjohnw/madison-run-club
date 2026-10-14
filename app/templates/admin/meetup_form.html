@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit meetup" if m else "New meetup" }}{% endblock %}
+{% block content %}
+<div class="narrow">
+  <p class="kicker"><a class="link" href="/admin">← Admin</a></p>
+  <h1 class="h1" style="margin:6px 0 18px">{{ "Edit meetup" if m else "New meetup" }}</h1>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ '/admin/meetups/%d'|format(m.id) if m else '/admin/meetups/new' }}" class="card">
+    <label class="field"><span>Title</span><input class="input" name="title" required maxlength="120" value="{{ m.title if m else '' }}" placeholder="Run + Thursday Night Football" /></label>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+      <label class="field"><span>Date</span><input class="input" type="date" name="date" required value="{{ m.date.isoformat() if m else '' }}" /></label>
+      <label class="field"><span>Time</span><input class="input" name="time_label" maxlength="20" value="{{ m.time_label if m else '' }}" placeholder="6:00 PM" /></label>
+      <label class="field"><span>Type</span>
+        <select class="input" name="slot">
+          {% for k, label in [("club", "Weekly club run"), ("other", "Something extra"), ("race", "Race day")] %}
+          <option value="{{ k }}" {% if m and m.slot == k %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <label class="field"><span>Where</span><input class="input" name="location" maxlength="200" value="{{ m.location if m else '' }}" placeholder="Olin Park, by the pavilion" /><small>Gets a "Open in Maps" link.</small></label>
+    <label class="field"><span>Details</span><textarea class="input" name="details" maxlength="4000" placeholder="Route, parking, where we're going after...">{{ m.details if m else '' }}</textarea></label>
+    <div class="row" style="margin-bottom:16px">
+      <label class="row" style="gap:6px"><input type="checkbox" name="is_event" value="1" {% if m and m.is_event %}checked{% endif %} /> It's an event (watch party, bar, etc.)</label>
+      <label class="row" style="gap:6px"><input type="checkbox" name="canceled" value="1" {% if m and m.canceled %}checked{% endif %} /> Canceled</label>
+    </div>
+    <button class="btn blaze">Save</button>
+  </form>
+  {% if m %}
+  <form method="post" action="/admin/meetups/{{ m.id }}/delete" style="margin-top:16px" onsubmit="return confirm('Delete this meetup and its RSVPs? (Marking it canceled keeps the history.)')">
+    <button class="btn danger small">Delete meetup</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

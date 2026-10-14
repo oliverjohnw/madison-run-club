@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div class="auth-grid">
+  {% include "_auth_side.html" %}
+  <div class="card auth">
+    <div class="row between" style="margin-bottom:16px;align-items:baseline">
+      <h2 class="h2">Log in</h2>
+      <a class="btn ghost small" href="/signup">New? Join the club</a>
+    </div>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <form method="post" action="/login">
+      <label class="field"><span>Username</span><input class="input" name="username" required autocomplete="username" autocapitalize="none" value="{{ username or '' }}" autofocus /></label>
+      <label class="field"><span>Password</span><input class="input" name="password" type="password" required autocomplete="current-password" /></label>
+      <button class="btn blaze block" type="submit">Let's go</button>
+    </form>
+    <p class="small muted" style="margin:14px 0 0">Forgot your password? Text John.</p>
+  </div>
+</div>
+{% endblock %}

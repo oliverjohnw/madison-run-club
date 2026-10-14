@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Join{% endblock %}
+{% block content %}
+<div class="auth-grid">
+  {% include "_auth_side.html" %}
+  <div class="card auth">
+    <div class="row between" style="margin-bottom:16px;align-items:baseline">
+      <h2 class="h2">Join the club</h2>
+      <a class="btn ghost small" href="/login">Have an account? Log in</a>
+    </div>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <form method="post" action="/signup">
+      <label class="field"><span>Full name</span><input class="input" name="full_name" required maxlength="120" autocomplete="name" value="{{ form.full_name or '' }}" /></label>
+      <label class="field"><span>Username</span><input class="input" name="username" required maxlength="24" autocapitalize="none" autocomplete="username" value="{{ form.username or '' }}" placeholder="e.g. jen.runs" /><small>Lowercase letters, numbers, dots, dashes.</small></label>
+      <div class="private">
+        <label class="field"><span>Email</span><input class="input" name="email" type="email" required autocomplete="email" value="{{ form.email or '' }}" /></label>
+        <label class="field"><span>Phone number <span class="muted" style="font-weight:400">(optional)</span></span><input class="input" name="phone" type="tel" maxlength="40" autocomplete="tel" value="{{ form.phone or '' }}" /></label>
+      </div>
+      <label class="field"><span>Password</span><input class="input" name="password" type="password" required autocomplete="new-password" /></label>
+      {% if need_code %}<label class="field"><span>Club code</span><input class="input" name="code" required autocapitalize="none" value="{{ form.code or '' }}" /><small>It's in the group chat.</small></label>{% endif %}
+      <button class="btn blaze block" type="submit">Sign me up</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

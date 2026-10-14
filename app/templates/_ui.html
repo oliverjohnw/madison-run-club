@@ -1,0 +1,157 @@
+{# Shared bits. Import with: {% import "_ui.html" as ui %} #}
+
+{% macro moose_path() -%}
+<g>
+  <path d="M26.5 20.5C21 20.5 14.5 19.6 10.6 15.9 7.9 13.3 6.3 9.9 6.2 5.6l3.1 2.6.6-4.4 3 3.6 1.8-4.6 2.3 4.7 2.9-3.6.8 5 3-2.4.2 5.2c1 2.6 2.6 4.7 4.6 6.3z"/>
+  <path transform="translate(64 0) scale(-1 1)" d="M26.5 20.5C21 20.5 14.5 19.6 10.6 15.9 7.9 13.3 6.3 9.9 6.2 5.6l3.1 2.6.6-4.4 3 3.6 1.8-4.6 2.3 4.7 2.9-3.6.8 5 3-2.4.2 5.2c1 2.6 2.6 4.7 4.6 6.3z"/>
+  <path d="M26.2 22.4c-3.6-1.3-8.3-.9-11 2.2 3.3 1.6 7.6 1.8 11 .8z"/>
+  <path d="M37.8 22.4c3.6-1.3 8.3-.9 11 2.2-3.3 1.6-7.6 1.8-11 .8z"/>
+  <path d="M25 19.2c0-2.4 14-2.4 14 0l-.9 11.2c0 3.6 3.2 8.2 3.2 14.3 0 5.6-4.3 9.3-9.3 9.3s-9.3-3.7-9.3-9.3c0-6.1 3.2-10.7 3.2-14.3z"/>
+  <path d="M29.6 53c-.2 3.6.7 7.4 2.4 7.4s2.6-3.8 2.4-7.4z"/>
+</g>
+{%- endmacro %}
+
+{% macro moose(cls="", title="") -%}
+<svg viewBox="0 0 64 64" class="{{ cls }}" fill="currentColor" {% if title %}role="img" aria-label="{{ title }}"{% else %}aria-hidden="true"{% endif %}>
+  <defs><mask id="mz{{ cls|replace(' ','') }}"><rect width="64" height="64" fill="#fff"/>
+    <circle cx="28.6" cy="28" r="1.5" fill="#000"/><circle cx="35.4" cy="28" r="1.5" fill="#000"/>
+    <ellipse cx="29.3" cy="47.5" rx="1.3" ry="2.1" fill="#000"/><ellipse cx="34.7" cy="47.5" rx="1.3" ry="2.1" fill="#000"/></mask></defs>
+  <g mask="url(#mz{{ cls|replace(' ','') }})">{{ moose_path() }}</g>
+</svg>
+{%- endmacro %}
+
+{% macro crest(cls="") -%}
+<svg viewBox="0 0 64 64" class="{{ cls }}" aria-hidden="true">
+  <circle cx="32" cy="32" r="31" fill="#f4efe2"/>
+  <circle cx="32" cy="32" r="27.5" fill="none" stroke="#1f4a37" stroke-width="1.4" stroke-dasharray="2.2 2"/>
+  <g transform="translate(9.6 7.5) scale(.7)" fill="#1f4a37">{{ moose_path() }}</g>
+  <circle cx="28.6" cy="27.1" r="1.05" fill="#f4efe2"/><circle cx="35.4" cy="27.1" r="1.05" fill="#f4efe2"/>
+</svg>
+{%- endmacro %}
+
+{% macro antler_icon() -%}
+<svg viewBox="0 0 32 20" fill="currentColor" aria-hidden="true">
+  <path d="M14 18C10 17.5 5.5 15.5 3.4 12.2 1.9 9.9 1.3 7 1.6 3.6l2 2.2.9-3.7 2 3.2 1.6-3.9 1.6 4.2 2.2-3 .3 4.3 2.3-1.7-.2 4.7c.4 2.9 1.8 5.4 3.8 7.4z"/>
+  <path transform="translate(32 0) scale(-1 1)" d="M14 18C10 17.5 5.5 15.5 3.4 12.2 1.9 9.9 1.3 7 1.6 3.6l2 2.2.9-3.7 2 3.2 1.6-3.9 1.6 4.2 2.2-3 .3 4.3 2.3-1.7-.2 4.7c.4 2.9 1.8 5.4 3.8 7.4z"/>
+</svg>
+{%- endmacro %}
+
+{% macro avatar(u, size="") -%}
+{% if u and u.has_avatar -%}
+<img class="av {{ size }}" src="/avatars/{{ u.id }}.jpg?v={{ u.avatar_version }}" alt="{{ u.name }}" loading="lazy" />
+{%- elif u -%}
+<span class="av {{ size }} av-c{{ u.id % 8 }}" title="{{ u.name }}" aria-label="{{ u.name }}">{{ u.name[:1] }}</span>
+{%- else -%}
+<span class="av {{ size }}">?</span>
+{%- endif %}
+{%- endmacro %}
+
+{% macro av_stack(people, max=6, size="sm") -%}
+<span class="av-stack">
+  {% for p in people[:max] %}<a href="/u/{{ p.username }}" title="{{ p.name }}">{{ avatar(p, size) }}</a>{% endfor %}
+  {% if people|length > max %}<span class="av {{ size }} more">+{{ people|length - max }}</span>{% endif %}
+</span>
+{%- endmacro %}
+
+{% macro rsvp_buttons(m, status, next="") -%}
+<div class="rsvp" role="group" aria-label="Are you coming?">
+  {% for key, label in [("in", "I'm in"), ("solo", "On my own"), ("out", "Can't<span class='wide-only'> make it</span>")] %}
+  <form method="post" action="/meetups/{{ m.id }}/rsvp{% if next %}?next={{ next|urlencode }}{% endif %}">
+    <input type="hidden" name="status" value="{{ key }}" />
+    <button class="{{ 'on-' ~ key if status == key }}" aria-pressed="{{ 'true' if status == key else 'false' }}"
+      title="{{ 'Click again to clear' if status == key else '' }}">{{ label|safe }}</button>
+  </form>
+  {% endfor %}
+</div>
+{%- endmacro %}
+
+{% macro ticket(m, r, users, user, next="", compact=False) -%}
+{% set cls = "main" if m.slot == "club" else ("race" if m.slot == "race" else "") %}
+<article class="ticket {{ cls }} {{ 'canceled' if m.canceled }}">
+  <div class="stub">
+    <div class="dow">{{ m.date.strftime("%a") }}</div>
+    <div class="dnum">{{ m.date.day }}</div>
+    <div class="mon">{{ m.date.strftime("%b") }}</div>
+    {% if m.time_label %}<div class="stub-time">{{ m.time_label }}</div>{% endif %}
+  </div>
+  <div class="body">
+    <div class="row between" style="align-items:flex-start">
+      <div style="min-width:0">
+        <div class="row" style="gap:6px;margin-bottom:4px">
+          {% if m.slot == "club" %}<span class="pill main">Club run</span>
+          {% elif m.slot == "race" %}<span class="pill main">Race day</span>
+          {% else %}<span class="pill">Extra</span>{% endif %}
+          {% if m.is_event %}<span class="pill gold">Event</span>{% endif %}
+          {% if m.canceled %}<span class="pill">Canceled</span>{% endif %}
+        </div>
+        <a class="title" href="/meetups/{{ m.id }}">{{ m.title }}</a>
+        <div class="where">{{ m.time_label }}{% if m.time_label and m.location %} · {% endif %}{{ m.location }}</div>
+        {% if user.is_admin %}<a class="tiny link" href="/admin/meetups/{{ m.id }}">Edit date, time, place</a>{% endif %}
+      </div>
+      {% if r["in"] %}<div title="Who's in">{{ av_stack(r["in"]|people(users)) }}</div>{% endif %}
+    </div>
+    {% if not compact and m.details %}<p class="small muted ticket-details">{{ m.details }}</p>{% endif %}
+    {% set wk = week_of(m.date) %}
+    {% if m.slot == "club" and user.follows_plan and 1 <= wk <= 6 %}<a class="link small" href="/plan#week-{{ wk }}" style="display:inline-block;margin-top:8px">Check out this week's workout →</a>{% endif %}
+    {% if not m.canceled %}
+    <div class="row" style="margin-top:12px">
+      {{ rsvp_buttons(m, r["by_user"].get(user.id), next) }}
+      <span class="tiny muted rsvp-counts"><b>{{ r["in"]|length }}</b> in · <b>{{ r["solo"]|length }}</b> on their own · <b>{{ r["out"]|length }}</b> can't</span>
+    </div>
+    {% endif %}
+  </div>
+</article>
+{%- endmacro %}
+
+{% macro steps(sess) -%}
+<ul class="steps-list">{% for line in sess.steps %}<li>{{ line }}</li>{% endfor %}</ul>
+{%- endmacro %}
+
+{% macro effort_dots(e) -%}
+{% if e %}<span class="effort-dots" title="Effort: {{ EFFORTS[e] }}">{% for i in range(1, 6) %}<i class="{{ 'on' if i <= e }}"></i>{% endfor %}</span>{% endif %}
+{%- endmacro %}
+
+{% macro activity(item, user, next="/feed") -%}
+{% set r = item.run %}
+<article class="activity">
+  <div class="who">
+    <a href="/u/{{ item.user.username }}">{{ avatar(item.user) }}</a>
+    <div style="min-width:0">
+      <a href="/u/{{ item.user.username }}">{{ item.user.name }}</a>
+      <div class="meta">{{ r.date|rel }}{% if item.meetup %} · with the club{% if item.crew %} + {{ item.crew|length }} other{{ 's' if item.crew|length != 1 }}{% endif %}{% else %} · on their own time{% endif %}</div>
+    </div>
+  </div>
+  <a class="title" href="/runs/{{ r.id }}">{{ r.title }}</a>
+  <div class="runstats">
+    <div><div class="lbl">Distance</div><div class="num">{{ "%.2f"|format(r.distance_mi) }}<small class="muted" style="font-size:.5em"> mi</small></div></div>
+    <div><div class="lbl">Pace</div><div class="num">{{ r.pace_sec|clock }}<small class="muted" style="font-size:.5em"> /mi</small></div></div>
+    <div><div class="lbl">Time</div><div class="num">{{ r.duration_sec|clock }}</div></div>
+    {% if r.effort %}<div><div class="lbl">Felt</div><div class="num" style="font-size:1.15rem;padding-top:6px">{{ EFFORTS[r.effort] }}</div></div>{% endif %}
+  </div>
+  {% if r.notes %}<p class="small" style="margin:10px 0 0;color:var(--ink-2)">{{ r.notes|truncate(220) }}</p>{% endif %}
+  <div class="foot">
+    <div class="row" style="gap:8px">{% if item.kudos %}{{ av_stack(item.kudos, 5, "xs") }}<span class="tiny muted">{{ item.kudos|length }} antler{{ 's' if item.kudos|length != 1 }} up</span>{% endif %}</div>
+    {% if item.user.id != user.id %}
+    <form method="post" action="/runs/{{ r.id }}/kudos?next={{ next|urlencode }}">
+      <button class="antlers {{ 'on' if item.mine_kudos }}" aria-pressed="{{ 'true' if item.mine_kudos else 'false' }}">{{ antler_icon() }} {{ "Antlers up" if not item.mine_kudos else "Nice" }}</button>
+    </form>
+    {% endif %}
+  </div>
+</article>
+{%- endmacro %}
+
+{% set PATCH_COLORS = {"first": "#2c6687", "club3": "#df5420", "perfect": "#3b3f6b", "wkd": "#d79a22", "hat": "#7a3b5b", "5k": "#1f4a37", "ten": "#4c6b2f", "mara": "#8a3a2c", "solo": "#48514a"} %}
+{% set PATCH_TEXT = {"first": "1st", "club3": "×3", "perfect": "100%", "wkd": "AM", "hat": "WK", "5k": "5K", "ten": "10", "mara": "26.2", "solo": "1"} %}
+{% macro patch(b) -%}
+<div class="patch {{ '' if b.earned else 'locked' }}" title="{{ b.desc }}">
+  <svg viewBox="0 0 80 80" aria-hidden="true">
+    <circle cx="40" cy="40" r="38" fill="{{ PATCH_COLORS[b.key] }}"/>
+    <circle cx="40" cy="40" r="33" fill="none" stroke="#f4efe2" stroke-width="1.6" stroke-dasharray="3 2.4" opacity=".85"/>
+    {% if b.key == "wkd" %}<circle cx="40" cy="44" r="9" fill="#f4efe2"/><g stroke="#f4efe2" stroke-width="2.4" stroke-linecap="round"><path d="M40 27v-4M28 32l-3-3M52 32l3-3M23 44h-4M57 44h4"/></g><rect x="16" y="46" width="48" height="12" fill="{{ PATCH_COLORS[b.key] }}"/><path d="M22 50h36" stroke="#f4efe2" stroke-width="2.2" stroke-linecap="round"/>
+    {% elif b.key == "solo" %}<g transform="translate(17 15) scale(.72)" fill="#f4efe2">{{ moose_path() }}</g>
+    {% else %}<text x="40" y="{{ 50 if PATCH_TEXT[b.key]|length < 4 else 48 }}" text-anchor="middle" fill="#f4efe2" style="font-family:var(--display);font-weight:900;font-size:{{ 30 if PATCH_TEXT[b.key]|length < 4 else 23 }}px">{{ PATCH_TEXT[b.key] }}</text>{% endif %}
+  </svg>
+  <b>{{ b.name }}</b>
+  <small>{{ b.desc }}</small>
+</div>
+{%- endmacro %}

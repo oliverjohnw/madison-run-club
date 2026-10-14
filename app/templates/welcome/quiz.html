@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Welcome{% endblock %}
+{% block content %}
+<div class="narrow">
+  {% include "welcome/_steps.html" %}
+  <h1 class="h1" style="margin:6px 0 10px">Three quick ones</h1>
+  <p class="lede">So we can point you at the right plan. No wrong answers, and you can change your goal later.</p>
+  {% if error %}<div class="error" style="margin-top:16px">{{ error }}</div>{% endif %}
+  <form method="post" action="/welcome/quiz" style="margin-top:22px">
+    {% for q in questions %}
+    <fieldset class="card" style="margin:0 0 14px">
+      <legend class="sr-only">{{ q.ask }}</legend>
+      <div class="row" style="gap:10px;align-items:baseline;margin-bottom:12px;flex-wrap:nowrap">
+        <span class="display blaze" style="font-size:1.8rem">{{ loop.index }}</span>
+        <div><div class="h3">{{ q.ask }}</div>{% if q.hint %}<div class="small muted">{{ q.hint }}</div>{% endif %}</div>
+      </div>
+      <div class="choices">
+        {% for key, label in q.options %}
+        <label class="choice"><input type="radio" name="{{ q.key }}" value="{{ key }}" {% if answers.get(q.key) == key %}checked{% endif %} required /><span>{{ label }}</span></label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    {% endfor %}
+    <button class="btn blaze" type="submit">Show me my goal →</button>
+  </form>
+</div>
+{% endblock %}

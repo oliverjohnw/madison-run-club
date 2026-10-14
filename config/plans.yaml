@@ -1,0 +1,186 @@
+# The five training plans. Suggestions only - nobody has to follow one, and
+# members can pick "do my own thing" instead. The site re-reads this file on
+# every page load.
+#
+# How they're built (one club meetup a week):
+# - `club` is the key workout, run together at that week's meetup. If someone
+#   only ever does the club run, that column alone is a complete (if gentle)
+#   6-week build. Plan week 1 has no meetup, so it's done solo.
+# - `short` and `long` are bonus runs on your own, any day. Skipping them is
+#   fine. Skipping a week is fine - repeat the last week you did.
+# - Club workouts are TIME-based (minutes, not miles) so a mixed group can run
+#   the same loop and finish together: faster folks just cover more ground.
+#
+# Pace placeholders get filled in from each runner's goal pace:
+#   {goal}  their 5K goal pace
+#   {tempo} comfortably hard - about 15-25 sec/mi slower than goal
+#   {easy}  conversational - about 75-120 sec/mi slower than goal
+# "Strides" = 20 seconds of quick, relaxed running (not a sprint), walk back.
+#
+# `max_pace` is the slowest goal pace (seconds per mile) that lands in a plan;
+# a custom goal goes to the first plan whose max_pace it fits under.
+
+plans:
+  send:
+    name: Send It
+    anchor: "6:30/mi"
+    max_pace: 420          # up to 7:00/mi
+    blurb: >
+      For people already running a few times a week who want to race this thing.
+      Goals of about 7:00/mi or quicker.
+    weeks:
+      - focus: Wake the legs up
+        club: {title: "Goal-pace reps", what: "10 min {easy} · 6 × 2 min at {goal}, 1 min jog between · 10 min easy", est: "~40 min"}
+        short: {title: "Easy + strides", what: "30 min at {easy}, then 4 strides", est: "30 min"}
+        long: {title: "Long-ish", what: "5 mi at {easy}. Talk the whole way.", est: "5 mi"}
+      - focus: Longer reps
+        club: {title: "3-minute reps", what: "10 min easy · 5 × 3 min at {goal}, 90 sec jog between · 10 min easy", est: "~43 min"}
+        short: {title: "Easy + strides", what: "35 min at {easy}, then 6 strides", est: "35 min"}
+        long: {title: "Long-ish", what: "5.5 mi at {easy}, last mile a little quicker", est: "5.5 mi"}
+      - focus: Hold it longer
+        club: {title: "Tempo", what: "10 min easy · 20 min steady at {tempo} · 10 min easy", est: "40 min"}
+        short: {title: "Easy + hill strides", what: "35 min at {easy} · 6 × 20 sec up a hill, walk down", est: "40 min"}
+        long: {title: "Long run", what: "6 mi at {easy}", est: "6 mi"}
+      - focus: The big week
+        club: {title: "4-minute reps", what: "10 min easy · 4 × 4 min a touch faster than {goal}, 2 min jog between · 10 min easy", est: "~45 min"}
+        short: {title: "Easy", what: "40 min at {easy}", est: "40 min"}
+        long: {title: "Long run, fast finish", what: "6.5 mi: first 4.5 at {easy}, last 2 at {tempo}", est: "6.5 mi"}
+      - focus: Dress rehearsal
+        club: {title: "Mile repeats", what: "10 min easy · 3 × 1 mi at {goal}, 2 min jog between · 10 min easy", est: "~45 min"}
+        short: {title: "Easy + strides", what: "30 min at {easy}, then 4 strides", est: "30 min"}
+        long: {title: "Easy", what: "5 mi at {easy}", est: "5 mi"}
+      - focus: Race week. Stay sharp, stay fresh.
+        club: {title: "Sharpener", what: "10 min easy · 4 × 90 sec at {goal}, full 2 min recovery · 10 min easy", est: "~32 min"}
+        short: {title: "Short + strides", what: "20-25 min at {easy}, then 4 strides", est: "25 min"}
+        long: {title: "Shakeout or rest", what: "15 min very easy, or nothing. Your call.", est: "15 min"}
+
+  push:
+    name: Push It
+    anchor: "7:30/mi"
+    max_pace: 495          # up to 8:15/mi
+    blurb: >
+      You run sometimes and want a real time to shoot for. Goals of roughly
+      7:00 to 8:15/mi.
+    weeks:
+      - focus: Find the pace
+        club: {title: "Goal-pace reps", what: "10 min {easy} · 6 × 90 sec at {goal}, 90 sec jog between · 10 min easy", est: "~38 min"}
+        short: {title: "Easy + strides", what: "25 min at {easy}, then 4 strides", est: "25 min"}
+        long: {title: "Long-ish", what: "4 mi at {easy}", est: "4 mi"}
+      - focus: A little longer
+        club: {title: "2.5-minute reps", what: "10 min easy · 5 × 2:30 at {goal}, 90 sec jog between · 10 min easy", est: "~40 min"}
+        short: {title: "Easy + strides", what: "30 min at {easy}, then 4 strides", est: "30 min"}
+        long: {title: "Long-ish", what: "4.5 mi at {easy}", est: "4.5 mi"}
+      - focus: Hold it longer
+        club: {title: "Tempo blocks", what: "10 min easy · 2 × 8 min at {tempo}, 3 min jog between · 10 min easy", est: "~40 min"}
+        short: {title: "Easy", what: "30 min at {easy}", est: "30 min"}
+        long: {title: "Long run", what: "5 mi at {easy}", est: "5 mi"}
+      - focus: The big week
+        club: {title: "3-minute reps", what: "10 min easy · 5 × 3 min at {goal}, 2 min jog between · 10 min easy", est: "~45 min"}
+        short: {title: "Easy + strides", what: "30 min at {easy}, then 6 strides", est: "30 min"}
+        long: {title: "Long run, fast finish", what: "5 mi at {easy}, last mile at {goal}", est: "5 mi"}
+      - focus: Dress rehearsal
+        club: {title: "Long reps", what: "10 min easy · 3 × 6 min at {goal}, 2 min jog between · 10 min easy", est: "~42 min"}
+        short: {title: "Easy + strides", what: "25 min at {easy}, then 4 strides", est: "25 min"}
+        long: {title: "Easy", what: "4 mi at {easy}", est: "4 mi"}
+      - focus: Race week. Stay sharp, stay fresh.
+        club: {title: "Sharpener", what: "10 min easy · 4 × 1 min at {goal}, 2 min easy between · 10 min easy", est: "~30 min"}
+        short: {title: "Short + strides", what: "20 min at {easy}, then 4 strides", est: "20 min"}
+        long: {title: "Shakeout or rest", what: "15 min very easy, or nothing.", est: "15 min"}
+
+  chase:
+    name: Chase It
+    anchor: "9:00/mi"
+    max_pace: 600          # up to 10:00/mi
+    blurb: >
+      You can run a mile or two and want to run the whole 5K without stopping,
+      at a pace that feels good. Goals of roughly 8:15 to 10:00/mi.
+    weeks:
+      - focus: Just get moving
+        club: {title: "Easy + pickups", what: "5 min walk · 25 min at {easy} (walk breaks are fine) · 4 × 20 sec pickups", est: "~32 min"}
+        short: {title: "Easy", what: "20-25 min at {easy}", est: "25 min"}
+        long: {title: "Long-ish", what: "2.5-3 mi at {easy}, walk breaks fine", est: "3 mi"}
+      - focus: Meet your goal pace
+        club: {title: "Goal-pace reps", what: "10 min {easy} · 4 × 2 min at {goal}, 2 min easy jog between · 5 min easy", est: "~31 min"}
+        short: {title: "Easy", what: "25 min at {easy}", est: "25 min"}
+        long: {title: "Long-ish", what: "3 mi at {easy}", est: "3 mi"}
+      - focus: Longer reps
+        club: {title: "4-minute reps", what: "10 min easy · 3 × 4 min at {goal}, 2 min easy jog between · 5 min easy", est: "~31 min"}
+        short: {title: "Easy", what: "25-30 min at {easy}", est: "30 min"}
+        long: {title: "Long run", what: "3.5 mi at {easy}", est: "3.5 mi"}
+      - focus: Hold it longer
+        club: {title: "Steady run", what: "10 min easy · 12 min at {tempo} · 10 min easy", est: "32 min"}
+        short: {title: "Easy + strides", what: "30 min at {easy}, then 4 strides", est: "30 min"}
+        long: {title: "Long run", what: "4 mi at {easy}", est: "4 mi"}
+      - focus: Dress rehearsal
+        club: {title: "Mile repeats", what: "10 min easy · 2 × 1 mi at {goal}, 3 min easy between · 5 min easy", est: "~38 min"}
+        short: {title: "Easy", what: "25 min at {easy}", est: "25 min"}
+        long: {title: "Easy, quick finish", what: "3.5 mi at {easy}, last half mile at {goal}", est: "3.5 mi"}
+      - focus: Race week. Stay fresh.
+        club: {title: "Sharpener", what: "10 min easy · 3 × 2 min at {goal}, 2 min easy between · 5 min easy", est: "~25 min"}
+        short: {title: "Short", what: "20 min at {easy}", est: "20 min"}
+        long: {title: "Shakeout or rest", what: "10-15 min very easy, or a walk.", est: "15 min"}
+
+  cruise:
+    name: Cruise It
+    anchor: "11:00/mi"
+    max_pace: 720          # up to 12:00/mi
+    blurb: >
+      New to running (or it's been a while) but you want to jog the whole 5K.
+      Goals of roughly 10:00 to 12:00/mi.
+    weeks:
+      - focus: Jog a little, walk a little
+        club: {title: "3-minute jogs", what: "5 min brisk walk · 6 × (3 min jog at {easy}, 1 min walk) · 5 min walk", est: "34 min"}
+        short: {title: "Jog/walk", what: "5 min walk · 5 × (2 min jog, 1 min walk) · 5 min walk", est: "25 min"}
+        long: {title: "Two miles", what: "2 miles. Jog most of it, walk whenever you need to.", est: "2 mi"}
+      - focus: Five minutes at a time
+        club: {title: "5-minute jogs", what: "5 min walk · 4 × (5 min jog at {easy}, 1 min walk) · 5 min walk", est: "34 min"}
+        short: {title: "Jog/walk", what: "5 min walk · 3 × (5 min jog, 1 min walk) · 5 min walk", est: "28 min"}
+        long: {title: "Two and a half", what: "2.5 miles, short walk break every half mile", est: "2.5 mi"}
+      - focus: Longer stretches
+        club: {title: "8-minute jogs", what: "5 min walk · 3 × (8 min jog at {easy}, 1 min walk) · 5 min walk", est: "37 min"}
+        short: {title: "Ten and ten", what: "5 min walk · 2 × (10 min jog, 2 min walk)", est: "29 min"}
+        long: {title: "Two and a half", what: "2.5 miles with just one walk break", est: "2.5 mi"}
+      - focus: Almost nonstop
+        club: {title: "12-minute jogs", what: "5 min walk · 2 × (12 min jog at {easy}, 2 min walk) · 4 × 20 sec pickups toward {goal}", est: "38 min"}
+        short: {title: "Nonstop", what: "20 min easy jog, no walking", est: "20 min"}
+        long: {title: "Three miles", what: "3 miles at {easy}. Walk breaks if you need them.", est: "3 mi"}
+      - focus: Practice the whole thing
+        club: {title: "20 minutes straight", what: "5 min walk · 20 min nonstop jog, last 5 min at {goal} · 5 min walk", est: "30 min"}
+        short: {title: "Easy", what: "20 min easy jog", est: "20 min"}
+        long: {title: "Practice 5K", what: "3.1 miles at {easy}. One walk break allowed.", est: "3.1 mi"}
+      - focus: Race week. Rest up.
+        club: {title: "Tune-up", what: "5 min walk · 2 × (8 min jog, 1 min walk), last 2 min of each at {goal} · 5 min walk", est: "28 min"}
+        short: {title: "Short", what: "15 min easy jog", est: "15 min"}
+        long: {title: "Rest", what: "A walk, a stretch, a good dinner.", est: "-"}
+
+  finish:
+    name: Finish It
+    anchor: "Just finish"
+    max_pace: 99999
+    blurb: >
+      From zero to hero. Just want to finish this thing. Walk breaks totally allowed on race day!
+    weeks:
+      - focus: Walk, jog, repeat
+        club: {title: "1-minute jogs", what: "5 min brisk walk · 8 × (1 min jog, 90 sec walk) · 5 min walk", est: "30 min"}
+        short: {title: "Walk with jogs", what: "25 min walk with six 30-sec jogs sprinkled in", est: "25 min"}
+        long: {title: "Two miles, any mix", what: "Cover 2 miles. Jog what feels okay, walk the rest.", est: "2 mi"}
+      - focus: Two minutes at a time
+        club: {title: "2-minute jogs", what: "5 min walk · 6 × (2 min jog, 1 min walk) · 5 min walk", est: "28 min"}
+        short: {title: "Run/walk", what: "5 min walk · 6 × (90 sec jog, 90 sec walk)", est: "23 min"}
+        long: {title: "Two miles", what: "2 miles. Try to jog all the flat parts.", est: "2 mi"}
+      - focus: Three minutes at a time
+        club: {title: "3-minute jogs", what: "5 min walk · 5 × (3 min jog, 1 min walk) · 5 min walk", est: "30 min"}
+        short: {title: "Run/walk", what: "5 min walk · 4 × (3 min jog, 90 sec walk)", est: "23 min"}
+        long: {title: "Two and a half", what: "2.5 miles of jog/walk, more jog than walk", est: "2.5 mi"}
+      - focus: Five minutes at a time
+        club: {title: "5-minute jogs", what: "5 min walk · 4 × (5 min jog, 1 min walk) · 5 min walk", est: "34 min"}
+        short: {title: "Run/walk", what: "5 min walk · 3 × (5 min jog, 2 min walk)", est: "26 min"}
+        long: {title: "Longest jog yet", what: "2.5-3 miles. Try one jog of 10 minutes straight.", est: "3 mi"}
+      - focus: Practice the whole thing
+        club: {title: "8-minute jogs", what: "5 min walk · 3 × (8 min jog, 1 min walk) · 5 min walk", est: "37 min"}
+        short: {title: "Ten and ten", what: "5 min walk · 2 × (10 min jog, 2 min walk)", est: "29 min"}
+        long: {title: "Practice 5K", what: "3.1 miles, nice and slow. Walk breaks allowed. You're ready.", est: "3.1 mi"}
+      - focus: Race week. Rest up.
+        club: {title: "Tune-up", what: "5 min walk · 2 × (10 min jog, 1 min walk) · 5 min walk", est: "31 min"}
+        short: {title: "Short and easy", what: "15-20 min of easy jog/walk", est: "20 min"}
+        long: {title: "Rest", what: "Walk around, stretch, eat a good dinner.", est: "-"}

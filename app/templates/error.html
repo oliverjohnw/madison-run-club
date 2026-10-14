@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ code }}{% endblock %}
+{% block content %}
+<div class="narrow" style="text-align:center;padding:40px 0">
+  {{ ui.moose("err-moose") }}
+  <h1 class="h1" style="margin-top:12px">{{ "Wrong trail" if code == 404 else "Not your trail" }}</h1>
+  <p class="lede" style="margin:12px auto 20px">{{ "That page doesn't exist (or it got deleted)." if code == 404 else "That one's admin-only, or it isn't yours to change." }}</p>
+  <a class="btn" href="/">Back home</a>
+</div>
+{% endblock %}
