@@ -1,7 +1,49 @@
 # Madison Moosehead Run Club
 
-The club's website: schedule + RSVPs, a Strava-style run log and feed, personal stats, four
-training plans, and the race-day vote.
+**Live: [moosehead.up.railway.app](https://moosehead.up.railway.app)** (members only; joining takes a club code)
+
+A website for a casual run club of friends training together for a 5K: weekly club runs with
+RSVPs, a Strava-style run log and feed, personal stats, optional training plans, and a vote on
+race day. Built for under 10 people of every ability, from "never run" to "runs every day".
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/home.jpg" alt="Home: next club runs with RSVP buttons, race countdown, weekly stats"></td>
+    <td width="50%"><img src="docs/screenshots/profile.jpg" alt="Profile styled as a race bib, with totals, 5K readiness and weekly miles"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/schedule.jpg" alt="Schedule: one club run a week as ticket stubs, with descriptions and RSVPs"></td>
+    <td><img src="docs/screenshots/club.jpg" alt="Club page: total miles as a road trip from Madison to Lambeau, plus leaderboards"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/plan.jpg" alt="6-week training plan, with each week's club workout tied to its meetup"></td>
+    <td><img src="docs/screenshots/stats.jpg" alt="Pace-per-run chart against goal pace, and earned badges as sewn-on patches"></td>
+  </tr>
+</table>
+
+<p align="center"><img src="docs/screenshots/mobile-log.jpg" width="260" alt="Logging a run on a phone, with live pace preview"></p>
+
+<sub>Screenshots use made-up demo members and runs.</sub>
+
+## Design decisions
+
+- **One meetup a week, everything else optional.** Friends said three a week was too many. Each
+  week has one club run; plans add two optional solo runs around it.
+- **Plans are opt-in.** At signup you choose "give me a plan" (3-question quiz, then a suggested
+  goal pace and one of five plans) or "I'll do my own thing". You can switch either way later.
+- **Workouts are time-based**, e.g. "5 × 3 min at goal pace", so a 6:30/mi runner and a
+  run/walker can share the same loop and finish around the same time.
+- **The quiz math is simple and explainable**: mile-time guess → 5K pace via Riegel's formula,
+  adjusted for recent distance and frequency, rounded to 15 seconds.
+- **Privacy by default**: email and phone are only visible to the admin; profile photos are
+  re-encoded to strip location data; signup needs a club code and is rate-limited.
+- **No front-end framework**: server-rendered pages, one hand-written stylesheet, and charts drawn
+  as plain SVG. Fast on phones, no build step.
+- **Character over templates**: meetups look like ticket stubs, profiles like race bibs, badges
+  like sewn-on patches, and the club's combined miles drive a moose down the road to Lambeau Field.
+
+Built by John Oliver with [Claude Code](https://claude.com/claude-code) as a coding partner: I
+designed the features, schedule, training approach and look; Claude wrote most of the code.
 
 ## What's in it
 
@@ -9,7 +51,7 @@ training plans, and the race-day vote.
 |---|---|
 | `/signup` | Join with the club code. Full name + username (public), email + optional phone (only the admin sees those). Any password. |
 | `/welcome` | "Give me a plan" or "I'll do my own thing". Plan: 3-question quiz -> suggested goal (accept it, pick one of the 5 plans, or type a pace) -> profile picture. Own: straight to the profile picture. |
-| `/` | Next club runs with RSVP buttons, this week's plan (if you follow one), race countdown, your week, recent club runs. |
+| `/` | Next club runs with RSVP buttons and a link to that week's workout, race countdown, your week, recent club runs. |
 | `/schedule` | One club run a week, then the 5K. **I'm in** / **On my own** (doing it on your own time) / **Can't make it**. |
 | `/meetups/{id}` | Who's coming, map link, and each plan's club workout for that week. |
 | `/log` | Log a run: distance, time, which meetup (or on your own), how it felt, notes. |
