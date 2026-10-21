@@ -97,6 +97,7 @@ class Run(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     date: Mapped[date] = mapped_column(Date, index=True)
+    activity: Mapped[str] = mapped_column(String(8), server_default="run")  # run / walk / bike
     distance_mi: Mapped[float] = mapped_column(Float)
     duration_sec: Mapped[int] = mapped_column(Integer)
     meetup_id: Mapped[int | None] = mapped_column(ForeignKey("meetups.id", ondelete="SET NULL"), nullable=True)
@@ -109,6 +110,14 @@ class Run(Base):
     def pace_sec(self) -> float:
         return self.duration_sec / self.distance_mi if self.distance_mi else 0
 
+    @property
+    def speed_mph(self) -> float:
+        return self.distance_mi / (self.duration_sec / 3600) if self.duration_sec else 0
+
+    @property
+    def is_bike(self) -> bool:
+        return self.activity == "bike"
+
 
 class Kudos(Base):
     __tablename__ = "kudos"
@@ -120,9 +129,14 @@ class Kudos(Base):
 
 
 class RaceVote(Base):
-    __tablename__ = "race_votes"
+    """One row per (member, race day that works for them). Members can pick several days.
+    Replaced the old one-vote-per-person `race_votes` table; see seed.migrate_race_votes."""
 
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    __tablename__ = "race_day_votes"
+    __table_args__ = (UniqueConstraint("user_id", "choice"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     choice: Mapped[date] = mapped_column(Date)
 
 

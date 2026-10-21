@@ -5,7 +5,8 @@
 <div class="narrow" style="max-width:720px">
   {% if new %}
   <div class="ok pop">
-    Logged. That's run #{{ nth }}{% if longest_yet %}, and your <b>longest yet</b>{% endif %}{% if fastest_yet %}{{ " and" if longest_yet else ", and" }} your <b>fastest pace yet</b>{% endif %}.
+    {% set noun = {"run": "run", "walk": "walk", "bike": "ride"}.get(r.activity, "run") %}
+    Logged. That's {{ noun }} #{{ nth }}{% if longest_yet %}, and your <b>longest {{ noun }} yet</b>{% endif %}{% if fastest_yet %}{{ " and" if longest_yet else ", and" }} your <b>{{ "fastest ride" if r.is_bike else "fastest pace" }} yet</b>{% endif %}.
   </div>
   {% endif %}
 
@@ -16,11 +17,13 @@
       <div class="small muted">{{ r.date|day }}{% if item.meetup %} · <a class="link" href="/meetups/{{ item.meetup.id }}">{{ item.meetup.title }}</a>{% else %} · on their own time{% endif %}</div>
     </div>
   </div>
+  <p style="margin:0 0 6px"><span class="act-tag act-{{ r.activity }}">{{ ui.activity_icon(r.activity) }}{{ ACTIVITIES.get(r.activity, "Run") }}</span></p>
   <h1 class="h1">{{ r.title }}</h1>
 
   <div class="stats four" style="margin-top:20px">
     <div class="stat"><div class="num">{{ "%.2f"|format(r.distance_mi) }}<small>mi</small></div><div class="lbl">Distance</div></div>
-    <div class="stat"><div class="num">{{ r.pace_sec|clock }}<small>/mi</small></div><div class="lbl">Pace</div></div>
+    {% if r.is_bike %}<div class="stat"><div class="num">{{ "%.1f"|format(r.speed_mph) }}<small>mph</small></div><div class="lbl">Speed</div></div>
+    {% else %}<div class="stat"><div class="num">{{ r.pace_sec|clock }}<small>/mi</small></div><div class="lbl">Pace</div></div>{% endif %}
     <div class="stat"><div class="num">{{ r.duration_sec|clock }}</div><div class="lbl">Time</div></div>
     <div class="stat"><div class="num" style="font-size:1.7rem;padding-top:6px">{{ EFFORTS[r.effort] if r.effort else "-" }}</div><div class="lbl">Felt {{ ui.effort_dots(r.effort) }}</div></div>
   </div>

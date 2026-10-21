@@ -10,7 +10,7 @@ from starlette.requests import Request
 
 from app import club
 from app.auth import get_current_user
-from app.stats import EFFORTS, short_date
+from app.stats import ACTIVITIES, EFFORTS, short_date
 
 templates = Jinja2Templates(directory="app/templates")
 
@@ -42,6 +42,7 @@ templates.env.filters["day"] = day_label
 templates.env.filters["short"] = short_date
 templates.env.filters["rel"] = relative_day
 templates.env.globals["EFFORTS"] = EFFORTS
+templates.env.globals["ACTIVITIES"] = ACTIVITIES
 templates.env.globals["SLOT_NAMES"] = club.SLOT_NAMES
 templates.env.globals["week_of"] = club.week_number
 

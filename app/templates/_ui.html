@@ -111,6 +111,19 @@
 {% if e %}<span class="effort-dots" title="Effort: {{ EFFORTS[e] }}">{% for i in range(1, 6) %}<i class="{{ 'on' if i <= e }}"></i>{% endfor %}</span>{% endif %}
 {%- endmacro %}
 
+{% macro activity_icon(kind) -%}
+<svg class="act-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{% if kind == "bike" %}<circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h6l3.5 7.5M9 9 12 16.5h-1M14 6h2.5"/>
+{% elif kind == "walk" %}<circle cx="13" cy="4" r="2"/><path d="M11 21l2-6-2.5-2.5V8l3 1.5 2 3M10.5 8 7 10.5V14M13 15l2 6"/>
+{% else %}<circle cx="15" cy="4" r="2"/><path d="M7 21l3-6 3 2v5M10 15l1.5-5L8 11l-2 3M11.5 10l3-1.5 2 3.5 3 1"/>{% endif %}
+</svg>
+{%- endmacro %}
+
+{% macro activity_stat(r) -%}
+{% if r.is_bike %}<div><div class="lbl">Speed</div><div class="num">{{ "%.1f"|format(r.speed_mph) }}<small class="muted" style="font-size:.5em"> mph</small></div></div>
+{% else %}<div><div class="lbl">Pace</div><div class="num">{{ r.pace_sec|clock }}<small class="muted" style="font-size:.5em"> /mi</small></div></div>{% endif %}
+{%- endmacro %}
+
 {% macro activity(item, user, next="/feed") -%}
 {% set r = item.run %}
 <article class="activity">
@@ -121,10 +134,10 @@
       <div class="meta">{{ r.date|rel }}{% if item.meetup %} · with the club{% if item.crew %} + {{ item.crew|length }} other{{ 's' if item.crew|length != 1 }}{% endif %}{% else %} · on their own time{% endif %}</div>
     </div>
   </div>
-  <a class="title" href="/runs/{{ r.id }}">{{ r.title }}</a>
+  <a class="title" href="/runs/{{ r.id }}"><span class="act-tag act-{{ r.activity }}">{{ activity_icon(r.activity) }}{{ ACTIVITIES.get(r.activity, "Run") }}</span>{{ r.title }}</a>
   <div class="runstats">
     <div><div class="lbl">Distance</div><div class="num">{{ "%.2f"|format(r.distance_mi) }}<small class="muted" style="font-size:.5em"> mi</small></div></div>
-    <div><div class="lbl">Pace</div><div class="num">{{ r.pace_sec|clock }}<small class="muted" style="font-size:.5em"> /mi</small></div></div>
+    {{ activity_stat(r) }}
     <div><div class="lbl">Time</div><div class="num">{{ r.duration_sec|clock }}</div></div>
     {% if r.effort %}<div><div class="lbl">Felt</div><div class="num" style="font-size:1.15rem;padding-top:6px">{{ EFFORTS[r.effort] }}</div></div>{% endif %}
   </div>

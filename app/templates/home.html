@@ -20,18 +20,9 @@
       <div class="section-head"><h2 class="h2">Next up</h2><a class="link small" href="/schedule">Full schedule</a></div>
       <div class="stack" style="--gap:12px">
         {% for m in upcoming %}{{ ui.ticket(m, rsvps[m.id], users, user, "/") }}
-        {% else %}<div class="empty">Nothing on the schedule yet.</div>{% endfor %}
+        {% else %}<div class="empty">Nothing else on the schedule. Race day's coming.</div>{% endfor %}
       </div>
     </section>
-
-    {% if not user.follows_plan %}
-    <section>
-      <div class="card row between">
-        <div style="flex:1;min-width:220px"><div class="h3">Doing your own thing</div><p class="small muted" style="margin:2px 0 0">Log your runs and we'll track the rest. Want ideas? The plans are there whenever.</p></div>
-        <a class="btn ghost small" href="/plan">Browse plans</a>
-      </div>
-    </section>
-    {% endif %}
 
     <section>
       <div class="section-head"><h2 class="h2">Lately</h2><a class="link small" href="/feed">Everything</a></div>
@@ -53,19 +44,26 @@
       </div>
       <p class="small" style="margin:12px 0 0;opacity:.8">
         {% if race.locked %}{{ race.date|day }}. It's locked in.
-        {% elif voted %}You voted {{ voted.choice|day }}. Waiting on the rest.
+        {% elif voted %}You picked {% for d in voted %}{{ d.strftime("%a") }}{{ " & " if loop.revindex == 2 else (", " if not loop.last else "") }}{% endfor %}. Waiting on the rest.
         {% else %}<span style="color:var(--blaze)">→</span> We haven't picked the day. Go vote.{% endif %}
       </p>
     </a>
 
     <div class="card">
       <div class="card-head"><h3 class="h3">You</h3><a class="link small" href="/u/{{ user.username }}">Your stats</a></div>
-      <div class="stats" style="grid-template-columns:repeat(3,1fr)">
-        <div class="stat"><div class="num">{{ s.week_miles|miles }}</div><div class="lbl">mi this week</div></div>
-        <div class="stat"><div class="num">{{ s.week_streak }}</div><div class="lbl">week streak</div></div>
-        <div class="stat"><div class="num">{{ s.miles|miles }}</div><div class="lbl">total mi</div></div>
+      <div class="kicker" style="margin-bottom:6px">This week</div>
+      <div class="by-activity">
+        {% for k, label in ACTIVITIES.items() %}
+        <div><div class="k">{{ ui.activity_icon(k) }}{{ label }}</div><div class="v">{{ s.week_by_activity[k]|miles }}<small>mi</small></div></div>
+        {% endfor %}
       </div>
-      {% if s.best_5k %}<p class="small muted" style="margin:12px 0 0">Based on your best run, you're on track for a <b style="color:var(--ink)">{{ s.best_5k|clock }}</b> 5K.</p>{% endif %}
+      <div class="kicker" style="margin:14px 0 6px">All time</div>
+      <div class="by-activity">
+        {% for k, label in ACTIVITIES.items() %}
+        <div><div class="k">{{ ui.activity_icon(k) }}{{ label }}</div><div class="v">{{ s.by_activity[k]|miles }}<small>mi</small></div></div>
+        {% endfor %}
+      </div>
+      <p class="small muted" style="margin:12px 0 0"><b style="color:var(--ink)">{{ s.week_streak }}</b>-week streak{% if s.best_5k %} · on track for a <b style="color:var(--ink)">{{ s.best_5k|clock }}</b> 5K, based on your best run{% endif %}.</p>
     </div>
 
     <a class="card" href="/club" style="display:block;text-decoration:none">

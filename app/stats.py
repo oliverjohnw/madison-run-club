@@ -14,6 +14,21 @@ from app import club
 from app.models import Meetup, Run
 
 EFFORTS = {1: "Chill", 2: "Comfy", 3: "Honest", 4: "Hard", 5: "Cooked"}
+ACTIVITIES = {"run": "Run", "walk": "Walk", "bike": "Bike"}
+
+# Which logs count where:
+# - "miles" (leaderboards, road trip, weekly bars, heatmap) = on foot: runs + walks.
+#   A long bike ride would otherwise swamp everyone's running totals.
+# - pace stats (average pace, pace chart, projected 5K, longest run) = runs only.
+# - bike miles are tracked on their own, and every log counts toward streaks and badges.
+
+
+def on_foot(runs: list[Run]) -> list[Run]:
+    return [r for r in runs if r.activity != "bike"]
+
+
+def runs_only(runs: list[Run]) -> list[Run]:
+    return [r for r in runs if r.activity == "run"]
 
 
 def short_date(d: date) -> str:
@@ -24,38 +39,57 @@ def short_date(d: date) -> str:
 
 @dataclass
 class RunnerStats:
-    miles: float = 0.0
-    runs: int = 0
-    seconds: int = 0
-    longest: float = 0.0
+    miles: float = 0.0          # on foot (run + walk)
+    runs: int = 0               # every log, any activity
+    seconds: int = 0            # on foot
+    run_miles: float = 0.0
+    run_seconds: int = 0
+    longest: float = 0.0        # longest run
     best_pace: float | None = None
     best_5k: float | None = None
     club_runs: int = 0
     week_streak: int = 0
-    week_miles: float = 0.0
+    week_miles: float = 0.0     # on foot, this plan week
+    by_activity: dict = field(default_factory=lambda: {k: 0.0 for k in ACTIVITIES})       # all-time miles
+    week_by_activity: dict = field(default_factory=lambda: {k: 0.0 for k in ACTIVITIES})  # this week's miles
     badges: list = field(default_factory=list)
 
     @property
     def avg_pace(self) -> float | None:
-        return self.seconds / self.miles if self.miles else None
+        """Average running pace (walks and rides left out)."""
+        return self.run_seconds / self.run_miles if self.run_miles else None
+
+    @property
+    def bike_miles(self) -> float:
+        return self.by_activity["bike"]
 
 
 def runner_stats(runs: list[Run], meetups: dict[int, Meetup], today: date) -> RunnerStats:
     s = RunnerStats()
+    this_week = club.week_number(today)
     for r in runs:
-        s.miles += r.distance_mi
         s.runs += 1
+        kind = r.activity if r.activity in ACTIVITIES else "run"
+        s.by_activity[kind] += r.distance_mi
+        if club.week_number(r.date) == this_week:
+            s.week_by_activity[kind] += r.distance_mi
+        if r.meetup_id in meetups:
+            s.club_runs += 1
+        if kind == "bike":
+            continue
+        s.miles += r.distance_mi
         s.seconds += r.duration_sec
+        if kind != "run":
+            continue
+        s.run_miles += r.distance_mi
+        s.run_seconds += r.duration_sec
         s.longest = max(s.longest, r.distance_mi)
         if r.distance_mi >= 1:
             s.best_pace = min(filter(None, [s.best_pace, r.pace_sec]))
             pred = club.riegel_5k(r.distance_mi, r.duration_sec)
             s.best_5k = min(filter(None, [s.best_5k, pred]))
-        if r.meetup_id in meetups:
-            s.club_runs += 1
-    this_week = club.week_number(today)
-    weeks_with_runs = {club.week_number(r.date) for r in runs}
-    s.week_miles = sum(r.distance_mi for r in runs if club.week_number(r.date) == this_week)
+    weeks_with_runs = {club.week_number(r.date) for r in runs}  # any activity keeps a streak alive
+    s.week_miles = s.week_by_activity["run"] + s.week_by_activity["walk"]
     w = this_week if this_week in weeks_with_runs else this_week - 1
     while w in weeks_with_runs:
         s.week_streak += 1
@@ -70,7 +104,7 @@ BADGE_DEFS = [
     ("perfect", "Perfect Attendance", "Every club run so far (2+)"),
     ("wkd", "Early Moose", "A weekend morning run"),
     ("hat", "Hat Trick", "3 runs in one week"),
-    ("5k", "The Full 5K", "One run of 3.1 mi or more"),
+    ("5k", "The Full 5K", "Run or walk 3.1 mi in one go"),
     ("ten", "Double Digits", "10 total miles"),
     ("mara", "Marathon, Eventually", "26.2 total miles"),
     ("solo", "Lone Moose", "Log a run on your own time"),
@@ -89,7 +123,7 @@ def badges(runs: list[Run], meetups: dict[int, Meetup], s: RunnerStats, today: d
         "perfect": len(past_club) >= 2 and past_club <= set(club_runs),
         "wkd": any(r.date.weekday() >= 5 for r in runs),
         "hat": max(per_week.values(), default=0) >= 3,
-        "5k": s.longest >= 3.1,
+        "5k": max([r.distance_mi for r in on_foot(runs)] + [0]) >= 3.1,
         "ten": s.miles >= 10,
         "mara": s.miles >= 26.2,
         "solo": any(r.meetup_id is None for r in runs),
@@ -106,6 +140,7 @@ def plan_week_count() -> int:
 
 
 def weekly_bars(runs: list[Run], today: date) -> dict:
+    runs = on_foot(runs)
     n_weeks = plan_week_count()
     miles = defaultdict(float)
     for r in runs:
@@ -128,6 +163,7 @@ def weekly_bars(runs: list[Run], today: date) -> dict:
 def heatmap(runs: list[Run], today: date, scale: float = 1.0) -> dict:
     """Tue-Mon rows x one column per plan week, shaded by miles that day.
     `scale` stretches the shade thresholds (the club-wide map passes ~members/2)."""
+    runs = on_foot(runs)
     by_day = defaultdict(float)
     for r in runs:
         by_day[r.date] += r.distance_mi
@@ -147,7 +183,7 @@ def heatmap(runs: list[Run], today: date, scale: float = 1.0) -> dict:
 
 
 def pace_trend(runs: list[Run], goal_pace: int | None, width: int = 860, height: int = 220) -> dict | None:
-    pts = sorted((r for r in runs if r.distance_mi >= 0.5), key=lambda r: (r.date, r.id))
+    pts = sorted((r for r in runs_only(runs) if r.distance_mi >= 0.5), key=lambda r: (r.date, r.id))
     if len(pts) < 2:
         return None
     paces = [r.pace_sec for r in pts]
@@ -183,7 +219,7 @@ def _nice_ticks(lo: float, hi: float) -> list[int]:
 
 def leaderboard(users: list, runs: list[Run], meetups: dict[int, Meetup], since: date | None = None) -> list[dict]:
     rows = {u.id: {"user": u, "miles": 0.0, "runs": 0, "club": 0} for u in users}
-    for r in runs:
+    for r in on_foot(runs):
         if since and r.date < since:
             continue
         row = rows.get(r.user_id)

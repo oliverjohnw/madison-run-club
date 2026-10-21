@@ -7,7 +7,16 @@
   {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
   <form method="post" action="{{ '/runs/%d/edit'|format(run.id) if run else '/log' }}" class="card">
-    <label class="field"><span>Which run?</span>
+    <fieldset style="border:0;padding:0;margin:0 0 14px">
+      <legend class="field" style="margin-bottom:5px"><span>What'd you do?</span></legend>
+      <div class="choices activity-pick">
+        {% for k, label in ACTIVITIES.items() %}
+        <label class="choice"><input type="radio" name="activity" value="{{ k }}" {% if (form.activity or "run") == k %}checked{% endif %} /><span>{{ ui.activity_icon(k) }}{{ label }}</span></label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <label class="field"><span>Which club run?</span>
       <select class="input" name="meetup_id">
         <option value="">On my own time</option>
         {% for m in choices %}
@@ -23,8 +32,8 @@
     </div>
 
     <div class="pace-preview">
-      <span class="kicker">Pace</span>
-      <span class="display" id="run-pace" style="font-size:2.4rem">–:––</span><span class="muted"> /mi</span>
+      <span class="kicker" id="run-pace-label">Pace</span>
+      <span class="display" id="run-pace" style="font-size:2.4rem">–:––</span><span class="muted" id="run-pace-unit"> /mi</span>
     </div>
 
     <fieldset style="border:0;padding:0;margin:0 0 14px">
@@ -52,4 +61,4 @@
   {% endif %}
 </div>
 {% endblock %}
-{% block scripts %}<script src="/static/pace.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/pace.js?v=2"></script>{% endblock %}

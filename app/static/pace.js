@@ -24,14 +24,22 @@
     upd();
   }
 
+  // Runs and walks show pace (min/mi); rides show speed (mph).
   const dist = document.getElementById('distance'), time = document.getElementById('time'), out = document.getElementById('run-pace');
+  const label = document.getElementById('run-pace-label'), unit = document.getElementById('run-pace-unit');
   if (dist && time && out) {
     const upd = () => {
       const d = parseFloat(dist.value), t = parse(time.value);
-      out.textContent = d > 0 && t > 0 ? clock(t / d) : '–:––';
+      const picked = document.querySelector('input[name=activity]:checked');
+      const bike = picked && picked.value === 'bike';
+      if (label) label.textContent = bike ? 'Speed' : 'Pace';
+      if (unit) unit.textContent = bike ? ' mph' : ' /mi';
+      if (!(d > 0 && t > 0)) { out.textContent = bike ? '––' : '–:––'; return; }
+      out.textContent = bike ? (d / (t / 3600)).toFixed(1) : clock(t / d);
     };
     dist.addEventListener('input', upd);
     time.addEventListener('input', upd);
+    document.querySelectorAll('input[name=activity]').forEach((r) => r.addEventListener('change', upd));
     upd();
   }
 })();

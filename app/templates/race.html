@@ -7,14 +7,14 @@
     <h1 class="h1" style="margin-top:6px">{{ "Race day is set" if locked else "Pick race day" }}</h1>
     <p class="lede" style="margin-top:10px">
       {% if locked %}It's {{ locked|day }}. See you there.
-      {% else %}Vote for the day that works best. You can change your vote until John locks it in. {{ votes.values()|map("length")|sum }} of {{ total }} have voted.{% endif %}
+      {% else %}Pick <b>every</b> day that works for you. Most votes wins. Change your picks any time until John locks it in. {{ voter_count }} of {{ total }} have voted.{% endif %}
     </p>
   </div>
 </div>
 
 <div class="grid three">
   {% for d, voters in votes.items() %}
-  {% set chosen = (mine == d) %}
+  {% set chosen = d in mine %}
   <div class="card vote {{ 'chosen' if chosen }} {{ 'winner' if locked == d }} {{ 'dim' if locked and locked != d }}">
     <div class="kicker">{{ d.strftime("%A") }}</div>
     <div class="display" style="font-size:3.6rem;line-height:.9;margin:6px 0">{{ d.strftime("%b") }} {{ d.day }}</div>
@@ -26,7 +26,8 @@
     {% if not locked %}
     <form method="post" action="/race/vote" style="margin-top:14px">
       <input type="hidden" name="choice" value="{{ d.isoformat() }}" />
-      <button class="btn {{ 'blaze' if chosen else 'ghost' }} block" {% if chosen %}disabled{% endif %}>{{ "Your vote" if chosen else "This one works" }}</button>
+      <button class="btn {{ 'blaze' if chosen else 'ghost' }} block" aria-pressed="{{ 'true' if chosen else 'false' }}"
+        title="{{ 'Click to take this day back off' if chosen else '' }}">{{ "✓ Works for me" if chosen else "This one works" }}</button>
     </form>
     {% elif locked == d %}
     <p style="margin:14px 0 0"><span class="pill main">Locked in</span></p>

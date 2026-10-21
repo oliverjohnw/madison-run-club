@@ -77,13 +77,21 @@ def log_page(request: Request, user: User = Depends(me)):
             m = session.scalar(select(Meetup).join(Rsvp, Rsvp.meetup_id == Meetup.id).where(
                 Meetup.date == today, Rsvp.user_id == user.id, Rsvp.status == "in"))
             mid = str(m.id) if m else ""
-        form = {"date": today.isoformat(), "meetup_id": mid, "effort": "3"}
+        form = {"date": today.isoformat(), "meetup_id": mid, "effort": "3", "activity": "run"}
         if mid.isdigit() and (m := session.get(Meetup, int(mid))):
             form["date"] = m.date.isoformat()
         return render(request, "run_form.html", _form_ctx(session, None, form))
 
 
+# Sanity limits per activity: max distance (mi), and fastest / slowest believable pace (sec per mile).
+LIMITS = {"run": (60, 150, 3600), "walk": (60, 480, 3600), "bike": (200, 90, 1800)}
+
+
 def _parse(form: dict) -> tuple[dict | None, str | None]:
+    activity = form.get("activity", "run")
+    if activity not in LIMITS:
+        return None, "Pick Run, Walk or Bike."
+    max_mi, fastest, slowest = LIMITS[activity]
     try:
         d = date.fromisoformat(form.get("date", ""))
     except ValueError:
@@ -92,19 +100,20 @@ def _parse(form: dict) -> tuple[dict | None, str | None]:
         dist = float(form.get("distance", "").strip())
     except ValueError:
         return None, "Distance should be a number of miles, like 3.1."
-    if not 0.05 <= dist <= 60:
-        return None, "Distance should be between 0.05 and 60 miles."
+    if not 0.05 <= dist <= max_mi:
+        return None, f"Distance should be between 0.05 and {max_mi} miles."
     secs = club.parse_clock(form.get("time", ""))
     if not secs:
         return None, "Time should look like 28:15 (or 1:02:30)."
-    if not 150 <= secs / dist <= 3600:
-        return None, f"That's {club.clock(secs / dist)}/mi. Double-check the distance and time?"
+    if not fastest <= secs / dist <= slowest:
+        shown = f"{dist / (secs / 3600):.1f} mph" if activity == "bike" else f"{club.clock(secs / dist)}/mi"
+        return None, f"That's {shown}. Double-check the distance and time (and Run / Walk / Bike)?"
     if d > club.today() + timedelta(days=1):
         return None, "That date's in the future."
     mid = form.get("meetup_id", "")
     effort = form.get("effort", "")
     return {
-        "date": d, "distance_mi": round(dist, 2), "duration_sec": secs,
+        "date": d, "activity": activity, "distance_mi": round(dist, 2), "duration_sec": secs,
         "meetup_id": int(mid) if mid.isdigit() else None,
         "effort": int(effort) if effort in ("1", "2", "3", "4", "5") else None,
         "title": form.get("title", "").strip()[:120],
@@ -115,7 +124,8 @@ def _parse(form: dict) -> tuple[dict | None, str | None]:
 def _default_title(session: Session, values: dict) -> str:
     if values["meetup_id"] and (m := session.get(Meetup, values["meetup_id"])):
         return m.title
-    return f"{values['date']:%A} miles, solo"
+    noun = {"run": "miles, solo", "walk": "walk", "bike": "ride"}[values["activity"]]
+    return f"{values['date']:%A} {noun}"
 
 
 @router.post("/log")
@@ -153,13 +163,14 @@ def run_page(request: Request, run_id: int, user: User = Depends(me)):
         theirs = list(session.scalars(select(Run).where(Run.user_id == run.user_id)))
     # Little context numbers for the detail page.
     earlier = [r for r in theirs if (r.date, r.id) < (run.date, run.id)]
+    same = [r for r in earlier if r.activity == run.activity]  # "longest walk yet" compares walks with walks
     ctx = {
         "item": item,
-        "longest_yet": run.distance_mi > max([r.distance_mi for r in earlier] + [0]) and bool(earlier),
-        "fastest_yet": run.distance_mi >= 1 and bool(earlier) and run.pace_sec < min(
-            [r.pace_sec for r in earlier if r.distance_mi >= 1] + [99999]),
-        "nth": len(earlier) + 1,
-        "pred_5k": club.riegel_5k(run.distance_mi, run.duration_sec) if run.distance_mi >= 1 else None,
+        "longest_yet": bool(same) and run.distance_mi > max(r.distance_mi for r in same),
+        "fastest_yet": run.distance_mi >= 1 and bool(same) and run.pace_sec < min(
+            [r.pace_sec for r in same if r.distance_mi >= 1] + [99999]),
+        "nth": len(same) + 1,
+        "pred_5k": club.riegel_5k(run.distance_mi, run.duration_sec) if run.distance_mi >= 1 and run.activity == "run" else None,
         "new": request.query_params.get("new") == "1",
     }
     return render(request, "run.html", ctx)
@@ -169,7 +180,7 @@ def run_page(request: Request, run_id: int, user: User = Depends(me)):
 def edit_page(request: Request, run_id: int, user: User = Depends(me)):
     with SessionLocal() as session:
         run = _own_run(session, run_id, user)
-        form = {"date": run.date.isoformat(), "distance": f"{run.distance_mi:g}", "time": club.clock(run.duration_sec),
+        form = {"date": run.date.isoformat(), "activity": run.activity, "distance": f"{run.distance_mi:g}", "time": club.clock(run.duration_sec),
                 "meetup_id": str(run.meetup_id or ""), "effort": str(run.effort or ""), "title": run.title, "notes": run.notes}
         return render(request, "run_form.html", _form_ctx(session, run, form))
 

@@ -87,8 +87,13 @@ def test_plan_member_flow():
         for path in ["/feed", "/club", "/race", "/u/jen", "/plan?show=send", "/settings", "/log", "/schedule"]:
             assert c.get(path).status_code == 200, path
 
-        r = c.post("/race/vote", data={"choice": "2026-11-22"})
-        assert r.status_code == 200 and "Your vote" in r.text
+        # Race day: several days can be picked, and clicking one again takes it back off.
+        c.post("/race/vote", data={"choice": "2026-11-22"})
+        r = c.post("/race/vote", data={"choice": "2026-11-23"})
+        assert r.status_code == 200 and r.text.count("✓ Works for me") == 2
+        r = c.post("/race/vote", data={"choice": "2026-11-23"})
+        assert r.text.count("✓ Works for me") == 1
+        assert "You picked Sun." in c.get("/").text
 
         # Email and phone stay private from non-admins; full name is the public name.
         profile = c.get("/u/jen").text
@@ -106,7 +111,7 @@ def test_own_workouts_flow():
         r = c.post("/welcome", data={"training": "own"})
         assert r.url.path == "/welcome/photo" and "Step 2 of 2" in r.text
         r = c.post("/welcome/done")
-        assert r.url.path == "/" and "Doing your own thing" in r.text
+        assert r.url.path == "/" and "Next up" in r.text
         assert "Your own thing" in c.get("/plan").text
         # Picking a plan later from the plan page.
         r = c.post("/plan/goal", data={"choice": "plan", "plan": "chase"})
@@ -177,3 +182,31 @@ def test_club_code_guessing_is_throttled():
             assert signup(c, "guesser", code="nope").status_code == 400
         assert signup(c, "guesser", code="moose").status_code == 429
         auth._failures.clear()
+
+
+def test_home_shows_only_the_next_run_all_day():
+    """Conftest pretends it's Thu Oct 22: that day's run is still the one on the home page."""
+    with client() as c:
+        signup(c, "homebody")
+        c.post("/welcome", data={"training": "own"})
+        home = c.post("/welcome/done").text
+        assert home.count('class="ticket ') == 1
+        assert "Wilsons Bar" in home or "Club Run" in home
+        assert home.index("Next up") < home.index("Lately")
+
+
+def test_log_walk_and_bike():
+    with client() as c:
+        signup(c, "multisport")
+        c.post("/welcome", data={"training": "own"})
+        c.post("/welcome/done")
+        r = c.post("/log", data={"date": "2026-10-21", "activity": "bike", "distance": "18", "time": "1:12:00"})
+        assert r.url.path.startswith("/runs/") and "15.0" in r.text and "mph" in r.text and "Wednesday ride" in r.text
+        r = c.post("/log", data={"date": "2026-10-21", "activity": "walk", "distance": "2", "time": "38:00"})
+        assert "Wednesday walk" in r.text and "19:00" in r.text
+        # A 2:00/mi "run" is a typo; the same speed (30 mph) on a bike is fine.
+        assert c.post("/log", data={"date": "2026-10-21", "activity": "run", "distance": "5", "time": "10:00"}).status_code == 400
+        assert c.post("/log", data={"date": "2026-10-21", "activity": "bike", "distance": "5", "time": "10:00"}).url.path.startswith("/runs/")
+        assert c.post("/log", data={"date": "2026-10-21", "activity": "jog", "distance": "1", "time": "10:00"}).status_code == 400
+        home = c.get("/").text
+        assert "23.0" in home and "2.0" in home  # bike (18 + 5) and walk miles in the You card

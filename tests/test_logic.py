@@ -53,3 +53,26 @@ def test_plan_week_lookup():
     assert wk["n"] == 2 and set(wk["sessions"]) == {"club", "short", "long"}
     assert club.plan_week("push", 450, 0) is None and club.plan_week("push", 450, 7) is None
     assert club.plan_week("", None, 2) is None  # own workouts: no plan
+
+
+def test_stats_split_by_activity():
+    from datetime import date
+
+    from app import stats
+    from app.models import Run
+
+    runs = [
+        Run(id=1, user_id=1, date=date(2026, 10, 20), activity="run", distance_mi=3.0, duration_sec=1800),   # 10:00/mi
+        Run(id=2, user_id=1, date=date(2026, 10, 21), activity="walk", distance_mi=2.0, duration_sec=2400),  # 20:00/mi
+        Run(id=3, user_id=1, date=date(2026, 10, 22), activity="bike", distance_mi=15.0, duration_sec=3600),  # 15 mph
+    ]
+    s = stats.runner_stats(runs, {}, date(2026, 10, 22))
+    assert s.runs == 3                                   # every log counts
+    assert s.miles == 5.0                                # on foot: run + walk, not the ride
+    assert s.bike_miles == 15.0
+    assert s.avg_pace == 600                             # run pace only (walk and ride left out)
+    assert s.longest == 3.0                              # longest *run*
+    assert s.week_by_activity == {"run": 3.0, "walk": 2.0, "bike": 15.0}
+    assert len(stats.pace_trend(runs, None) or {}) == 0  # one run isn't a trend; the walk/ride don't count
+    board = stats.leaderboard([type("U", (), {"id": 1, "name": "A"})()], runs, {})
+    assert board[0]["miles"] == 5.0

@@ -17,6 +17,7 @@
     </div>
     {% if is_me %}
     <div class="row" style="align-self:flex-start">
+      <a class="btn ghost small" href="/plan">My plan</a>
       <a class="btn ghost small" href="/settings">Settings</a>
       <form method="post" action="/logout"><button class="btn ghost small">Log out</button></form>
     </div>
@@ -36,10 +37,16 @@
 {% endif %}
 
 <div class="stats four" style="margin-top:20px">
-  <div class="stat"><div class="num">{{ s.miles|miles }}<small>mi</small></div><div class="lbl">Total distance</div></div>
-  <div class="stat"><div class="num">{{ s.runs }}</div><div class="lbl">Runs · {{ s.club_runs }} with the club</div></div>
-  <div class="stat"><div class="num">{{ s.avg_pace|clock if s.avg_pace else "-" }}<small>/mi</small></div><div class="lbl">Average pace</div></div>
+  <div class="stat"><div class="num">{{ s.miles|miles }}<small>mi</small></div><div class="lbl">On foot (run + walk)</div></div>
+  <div class="stat"><div class="num">{{ s.runs }}</div><div class="lbl">Logged · {{ s.club_runs }} with the club</div></div>
+  <div class="stat"><div class="num">{{ s.avg_pace|clock if s.avg_pace else "-" }}<small>/mi</small></div><div class="lbl">Average run pace</div></div>
   <div class="stat"><div class="num">{{ s.week_streak }}<small>wk</small></div><div class="lbl">Streak</div></div>
+</div>
+
+<div class="by-activity" style="margin-top:12px">
+  {% for k, label in ACTIVITIES.items() %}
+  <div><div class="k">{{ ui.activity_icon(k) }}{{ label }}</div><div class="v">{{ s.by_activity[k]|miles }}<small>mi</small></div></div>
+  {% endfor %}
 </div>
 
 <div class="grid two" style="margin-top:16px">

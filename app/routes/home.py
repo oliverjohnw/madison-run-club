@@ -7,7 +7,8 @@ from sqlalchemy import func, select
 
 from app import club, quiz, stats
 from app.db import SessionLocal
-from app.models import Meetup, RaceVote, Rsvp, Run, User
+from app.models import Meetup, Rsvp, Run, User
+from app.routes.race import my_days
 from app.routes.deps import me, meetups_by_id, users_by_id
 from app.routes.runs import feed_items
 from app.routes.schedule import rsvp_map
@@ -28,18 +29,20 @@ def home(request: Request, user: User = Depends(me)):
     today = club.today()
     with SessionLocal() as session:
         users = users_by_id(session)
+        # Just the next run. `date >= today` keeps a run up all day it happens (club time zone),
+        # so Thursday's run is still "next up" Thursday night and flips to the next one Friday.
         upcoming = list(session.scalars(
-            select(Meetup).where(Meetup.date >= today, Meetup.canceled.is_(False)).order_by(Meetup.date).limit(3)))
+            select(Meetup).where(Meetup.date >= today, Meetup.canceled.is_(False)).order_by(Meetup.date, Meetup.id).limit(1)))
         rsvps = rsvp_map(session, [m.id for m in upcoming])
         my_runs = list(session.scalars(select(Run).where(Run.user_id == user.id)))
-        voted = session.get(RaceVote, user.id)
+        voted = my_days(session, user.id)
         feed = feed_items(session, user, users, limit=4)
         week_start = club.week_start(club.week_number(today))
         week_runs = list(session.scalars(select(Run).where(Run.date >= week_start)))
         meetups = meetups_by_id(session)
 
     s = stats.runner_stats(my_runs, meetups, today)
-    club_week = {"miles": sum(r.distance_mi for r in week_runs), "runners": len({r.user_id for r in week_runs})}
+    club_week = {"miles": sum(r.distance_mi for r in stats.on_foot(week_runs)), "runners": len({r.user_id for r in week_runs})}
     return render(request, "home.html", {
         "upcoming": upcoming, "rsvps": rsvps, "users": users, "s": s, "race": race_info(),
         "fresh": request.query_params.get("fresh") == "1",
@@ -57,12 +60,13 @@ def club_page(request: Request, user: User = Depends(me)):
         rsvps = list(session.scalars(select(Rsvp)))
     member_list = sorted(users.values(), key=lambda u: u.name.lower())
     week_since = club.week_start(club.week_number(today))
-    total = sum(r.distance_mi for r in runs)
+    total = sum(r.distance_mi for r in stats.on_foot(runs))  # road trip + headline miles are on foot
     return render(request, "club.html", {
         "members": member_list,
         "total_miles": total,
         "total_runs": len(runs),
-        "total_seconds": sum(r.duration_sec for r in runs),
+        "total_seconds": sum(r.duration_sec for r in stats.on_foot(runs)),
+        "bike_miles": sum(r.distance_mi for r in runs if r.activity == "bike"),
         "journey": stats.journey(total),
         "board_week": stats.leaderboard(member_list, runs, meetups, since=week_since),
         "board_all": stats.leaderboard(member_list, runs, meetups),

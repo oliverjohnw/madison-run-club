@@ -495,3 +495,18 @@ a.card:hover, a.countdown:hover { border-color: var(--ink-2); }
 .solo-note a { color: var(--lake); font-weight: 600; }
 .solo-banner { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; margin-bottom: 14px; border-radius: var(--radius); background: var(--lake); color: var(--card); }
 .solo-banner a { color: inherit; }
+
+/* Run / Walk / Bike */
+.act-icon { width: 1.15em; height: 1.15em; flex-shrink: 0; }
+.act-tag { display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; padding: 2px 8px 2px 6px; border-radius: 99px; vertical-align: 2px;
+  font-family: var(--mono); font-size: .64rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; background: var(--blaze-soft); color: var(--blaze); }
+.act-tag.act-walk { background: var(--pine-soft); color: var(--pine); }
+.act-tag.act-bike { background: var(--lake-soft); color: var(--lake); }
+.activity-pick { grid-template-columns: repeat(3, 1fr); }
+.activity-pick span { display: flex; align-items: center; justify-content: center; gap: 8px; text-align: center; }
+.activity-pick .act-icon { width: 20px; height: 20px; }
+.by-activity { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.by-activity > div { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--card); }
+.by-activity .k { display: flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.by-activity .v { font-family: var(--display); font-weight: 800; font-size: 1.8rem; line-height: 1; margin-top: 6px; }
+.by-activity .v small { font-size: .45em; color: var(--muted); margin-left: 2px; }
