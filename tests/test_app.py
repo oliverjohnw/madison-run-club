@@ -78,7 +78,7 @@ def test_plan_member_flow():
         r = c.post(f"/meetups/{m.id}/rsvp", data={"status": "in"})
         assert r.status_code == 200 and 'aria-pressed="true"' in r.text
         meetup_page = c.get(f"/meetups/{m.id}").text
-        assert "What everyone" in meetup_page and "Push It" in meetup_page
+        assert "What everyone" not in meetup_page and 'id="photos"' in meetup_page
 
         r = c.post("/log", data={"date": "2026-10-22", "distance": "3.2", "time": "27:12", "meetup_id": str(m.id), "effort": "3"})
         assert "/runs/" in str(r.url) and "Logged." in r.text and "8:30" in r.text

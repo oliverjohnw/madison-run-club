@@ -62,7 +62,6 @@
           📷 {{ "Add more photos" if photos else "Add photos" }}
           <input type="file" name="photos" accept="image/*" multiple required class="sr-only" onchange="this.form.submit()" />
         </label>
-        <span class="small muted">Up to 10 at a time. Location data gets stripped.</span>
         <noscript><button class="btn small">Upload</button></noscript>
       </form>
       {% elif not photos %}
@@ -70,21 +69,6 @@
       {% endif %}
     </section>
 
-    {% if workouts %}
-    <section>
-      <div class="section-head"><h2 class="h2">What everyone's running</h2></div>
-      <p class="small muted" style="margin-top:-6px">Same loop, different workouts. It's all by time, so the group finishes around the same time.</p>
-      <div class="stack" style="--gap:10px">
-        {% for w in workouts %}
-        <div class="card tight session main" {% if w.mine %}style="border:2px solid var(--pine)"{% endif %}>
-          <div class="slot">{{ w.plan.name }} · {{ w.plan.anchor }}{% if w.mine %} <span class="pill pine">You</span>{% endif %}</div>
-          <div class="t">{{ w.session.title }}</div>
-          <div class="w">{{ ui.steps(w.session) }}</div>
-        </div>
-        {% endfor %}
-      </div>
-    </section>
-    {% endif %}
   </div>
 
   <aside class="stack" style="--gap:16px">

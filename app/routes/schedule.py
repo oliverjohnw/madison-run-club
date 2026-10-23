@@ -72,16 +72,8 @@ def meetup_page(request: Request, meetup_id: int, user: User = Depends(me)):
         users = users_by_id(session)
         logged = list(session.scalars(select(Run).where(Run.meetup_id == m.id).order_by(Run.distance_mi.desc())))
         photos = list(session.scalars(select(MeetupPhoto).where(MeetupPhoto.meetup_id == m.id).order_by(MeetupPhoto.id)))
-    # What each plan's club workout is that week, so a mixed group knows what everyone's doing.
-    workouts = []
-    for key, plan in (club.plans_config().items() if m.slot == "club" else []):
-        mine = user.follows_plan and key == user.plan_key
-        wk = club.plan_week(key, user.goal_pace_sec if mine else None, club.week_number(m.date))
-        if wk:
-            workouts.append({"key": key, "plan": plan, "session": wk["sessions"]["club"], "mine": mine})
-    workouts.sort(key=lambda w: not w["mine"])
     return render(request, "meetup.html", {
-        "m": m, "rsvps": rsvps, "users": users, "logged": logged, "workouts": workouts,
+        "m": m, "rsvps": rsvps, "users": users, "logged": logged,
         "week_n": club.week_number(m.date), "photos": photos, "can_add_photos": can_add_photos(m),
         "photo_msg": request.session.pop("photo_msg", None), "photo_ok": request.session.pop("photo_ok", None),
     })

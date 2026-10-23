@@ -218,7 +218,8 @@ def _nice_ticks(lo: float, hi: float) -> list[int]:
 # --- The whole club ---------------------------------------------------------
 
 def leaderboard(users: list, runs: list[Run], meetups: dict[int, Meetup], since: date | None = None) -> list[dict]:
-    rows = {u.id: {"user": u, "miles": 0.0, "runs": 0, "club": 0} for u in users}
+    """On-foot miles per member. `label` says what they were, e.g. "1 run · 2 walks"."""
+    rows = {u.id: {"user": u, "miles": 0.0, "runs": 0, "club": 0, "by": {"run": 0, "walk": 0}} for u in users}
     for r in on_foot(runs):
         if since and r.date < since:
             continue
@@ -227,10 +228,12 @@ def leaderboard(users: list, runs: list[Run], meetups: dict[int, Meetup], since:
             row["miles"] += r.distance_mi
             row["runs"] += 1
             row["club"] += r.meetup_id in meetups
+            row["by"]["walk" if r.activity == "walk" else "run"] += 1
     out = sorted(rows.values(), key=lambda x: (-x["miles"], -x["runs"], x["user"].name.lower()))
     top = max([x["miles"] for x in out] + [1.0])
     for x in out:
         x["share"] = x["miles"] / top
+        x["label"] = " · ".join(f"{n} {kind}{'s' if n != 1 else ''}" for kind, n in x["by"].items() if n)
     return out
 
 

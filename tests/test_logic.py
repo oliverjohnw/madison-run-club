@@ -75,4 +75,4 @@ def test_stats_split_by_activity():
     assert s.week_by_activity == {"run": 3.0, "walk": 2.0, "bike": 15.0}
     assert len(stats.pace_trend(runs, None) or {}) == 0  # one run isn't a trend; the walk/ride don't count
     board = stats.leaderboard([type("U", (), {"id": 1, "name": "A"})()], runs, {})
-    assert board[0]["miles"] == 5.0
+    assert board[0]["miles"] == 5.0 and board[0]["label"] == "1 run · 1 walk"

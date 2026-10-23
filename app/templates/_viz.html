@@ -58,7 +58,7 @@
     <span class="rank">{{ loop.index }}</span>
     <a href="/u/{{ r.user.username }}">{{ ui.avatar(r.user, "sm") }}</a>
     <div style="min-width:0">
-      <div class="row between" style="flex-wrap:nowrap"><a href="/u/{{ r.user.username }}" style="text-decoration:none;font-weight:600">{{ r.user.name }}</a><span class="tiny muted">{{ r.runs }} run{{ 's' if r.runs != 1 }}</span></div>
+      <div class="row between" style="flex-wrap:nowrap"><a href="/u/{{ r.user.username }}" style="text-decoration:none;font-weight:600">{{ r.user.name }}</a><span class="tiny muted">{{ r.label }}</span></div>
       <div class="track"><div style="width:{{ (r.share * 100)|round(1) }}%"></div></div>
     </div>
     <span class="mi">{{ r.miles|miles }}</span>
