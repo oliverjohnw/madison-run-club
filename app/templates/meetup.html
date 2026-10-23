@@ -31,6 +31,45 @@
     </div>
     {% endif %}
 
+    <section id="photos">
+      <div class="section-head">
+        <h2 class="h2">Photos</h2>
+        {% if photos %}<span class="kicker">{{ photos|length }} photo{{ 's' if photos|length != 1 }}</span>{% endif %}
+      </div>
+      {% if photo_ok %}<div class="ok">{{ photo_ok }}</div>{% endif %}
+      {% if photo_msg %}<div class="error">{{ photo_msg }}</div>{% endif %}
+      {% if photos %}
+      <div class="gallery">
+        {% for p in photos %}
+        {% set who = users.get(p.user_id) %}
+        <figure class="gallery-item">
+          <a href="/photos/{{ p.id }}.jpg" target="_blank" rel="noopener" title="Open full size">
+            <img src="/photos/{{ p.id }}/thumb.jpg" alt="Photo from {{ m.title }}{% if who %} by {{ who.name }}{% endif %}" loading="lazy" width="{{ p.width }}" height="{{ p.height }}" />
+          </a>
+          <figcaption>
+            {% if who %}{{ ui.avatar(who, "xs") }}<span>{{ who.first_name }}</span>{% endif %}
+            {% if p.user_id == user.id or user.is_admin %}
+            <form method="post" action="/photos/{{ p.id }}/delete" onsubmit="return confirm('Remove this photo?')"><button class="gallery-del" title="Remove photo" aria-label="Remove photo">×</button></form>
+            {% endif %}
+          </figcaption>
+        </figure>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if can_add_photos %}
+      <form method="post" action="/meetups/{{ m.id }}/photos" enctype="multipart/form-data" class="photo-drop">
+        <label class="btn {{ 'ghost' if photos else 'blaze' }}" style="cursor:pointer">
+          📷 {{ "Add more photos" if photos else "Add photos" }}
+          <input type="file" name="photos" accept="image/*" multiple required class="sr-only" onchange="this.form.submit()" />
+        </label>
+        <span class="small muted">Up to 10 at a time. Location data gets stripped.</span>
+        <noscript><button class="btn small">Upload</button></noscript>
+      </form>
+      {% elif not photos %}
+      <p class="small muted" style="margin:0">{{ "Canceled run, so no photos." if m.canceled else "Photos open on the day of the run. Bring your phone." }}</p>
+      {% endif %}
+    </section>
+
     {% if workouts %}
     <section>
       <div class="section-head"><h2 class="h2">What everyone's running</h2></div>

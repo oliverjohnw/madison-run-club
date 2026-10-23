@@ -65,7 +65,13 @@ def meetup_choices(session: Session, around: date) -> list[Meetup]:
 
 
 def _form_ctx(session: Session, run: Run | None, form: dict, error: str | None = None) -> dict:
-    return {"run": run, "form": form, "error": error, "choices": meetup_choices(session, club.today())}
+    choices = meetup_choices(session, club.today())
+    # Editing an older log: keep its own club run in the list, or saving would quietly unlink it.
+    if run and run.meetup_id and run.meetup_id not in {m.id for m in choices}:
+        if own := session.get(Meetup, run.meetup_id):
+            choices.append(own)
+    owner = session.get(User, run.user_id) if run else None
+    return {"run": run, "form": form, "error": error, "choices": choices, "owner": owner}
 
 
 @router.get("/log")

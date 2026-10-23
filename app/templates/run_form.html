@@ -4,6 +4,7 @@
 <div class="narrow">
   <p class="kicker">{{ "Fix the details" if run else "Nice work" }}</p>
   <h1 class="h1" style="margin:6px 0 18px">{{ "Edit run" if run else "Log a run" }}</h1>
+  {% if run and owner and owner.id != user.id %}<div class="note" style="margin-bottom:14px">Admin edit: you're changing <b>{{ owner.name }}</b>'s log.</div>{% endif %}
   {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
   <form method="post" action="{{ '/runs/%d/edit'|format(run.id) if run else '/log' }}" class="card">

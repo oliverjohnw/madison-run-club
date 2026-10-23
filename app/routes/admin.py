@@ -25,6 +25,7 @@ def admin_home(request: Request, user: User = Depends(admin_only)):
         run_counts = dict(session.execute(select(Run.user_id, func.count(Run.id)).group_by(Run.user_id)).all())
         meetups = list(session.scalars(select(Meetup).where(Meetup.date >= club.today()).order_by(Meetup.date)))
         votes = tally(session)
+        logs = list(session.scalars(select(Run).order_by(Run.date.desc(), Run.id.desc()).limit(200)))
     return render(request, "admin/index.html", {
         "members": members, "run_counts": run_counts, "meetups": meetups, "votes": votes,
         "locked": club.locked_race_date(), "plans": club.plans_config(),
@@ -32,6 +33,8 @@ def admin_home(request: Request, user: User = Depends(admin_only)):
         # One-time display of a freshly reset password (kept out of the URL so it never lands in logs).
         "temp": request.session.pop("temp_password", None),
         "saved": request.session.pop("admin_saved", None),
+        "logs": logs, "members_by_id": {m.id: m for m in members},
+        "log_saved": request.session.pop("log_saved", None),
     })
 
 
@@ -157,6 +160,25 @@ def race_lock(request: Request, user: User = Depends(admin_only), choice: str = 
                 session.delete(race)
         session.commit()
     return RedirectResponse("/admin#race", status_code=303)
+
+
+# --- Logs -------------------------------------------------------------------
+
+@router.post("/runs/{run_id}/activity")
+def run_activity(request: Request, run_id: int, user: User = Depends(admin_only), activity: str = Form("")):
+    """One-click Run / Walk / Bike fix for any member's log (e.g. walks logged before Walk existed).
+    For anything else (distance, time, notes), use Edit on the log itself."""
+    if activity not in ("run", "walk", "bike"):
+        raise HTTPException(400)
+    with SessionLocal() as session:
+        run = session.get(Run, run_id)
+        if run is None:
+            raise HTTPException(404)
+        run.activity = activity
+        session.commit()
+        owner = session.get(User, run.user_id)
+        request.session["log_saved"] = f"{owner.name if owner else 'That'}'s {run.date:%b} {run.date.day} log is now a {activity}."
+    return RedirectResponse("/admin#logs", status_code=303)
 
 
 # --- Members ----------------------------------------------------------------

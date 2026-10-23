@@ -45,13 +45,16 @@
     <div class="row" style="gap:8px">
       {% if item.kudos %}{{ ui.av_stack(item.kudos, 8, "xs") }}<span class="small muted">{{ item.kudos|length }} antler{{ 's' if item.kudos|length != 1 }} up</span>{% else %}<span class="small muted">No antlers yet.</span>{% endif %}
     </div>
+    <div class="row" style="gap:8px">
     {% if item.user.id != user.id %}
     <form method="post" action="/runs/{{ r.id }}/kudos?next=/runs/{{ r.id }}">
       <button class="antlers {{ 'on' if item.mine_kudos }}">{{ ui.antler_icon() }} {{ "Antlers up" if not item.mine_kudos else "Nice" }}</button>
     </form>
-    {% else %}
-    <a class="btn ghost small" href="/runs/{{ r.id }}/edit">Edit</a>
     {% endif %}
+    {% if item.user.id == user.id or user.is_admin %}
+    <a class="btn ghost small" href="/runs/{{ r.id }}/edit">{{ "Edit" if item.user.id == user.id else "Edit (admin)" }}</a>
+    {% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}

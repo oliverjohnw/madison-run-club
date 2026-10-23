@@ -210,3 +210,106 @@ def test_log_walk_and_bike():
         assert c.post("/log", data={"date": "2026-10-21", "activity": "jog", "distance": "1", "time": "10:00"}).status_code == 400
         home = c.get("/").text
         assert "23.0" in home and "2.0" in home  # bike (18 + 5) and walk miles in the You card
+
+
+def _jpeg_bytes(color="#df5420", size=(1200, 900)):
+    buf = BytesIO()
+    Image.new("RGB", size, color).save(buf, "JPEG")
+    return buf.getvalue()
+
+
+def test_admin_can_fix_anyones_log():
+    with client() as c:
+        signup(c, "oldwalker")
+        c.post("/welcome", data={"training": "own"})
+        c.post("/welcome/done")
+        r = c.post("/log", data={"date": "2026-10-21", "activity": "run", "distance": "2", "time": "36:00"})
+        run_id = int(r.url.path.split("/")[2])
+        assert "Edit (admin)" not in r.text
+        assert c.post(f"/admin/runs/{run_id}/activity", data={"activity": "walk"}).status_code == 403  # not admin
+        c.post("/logout")
+
+        c.post("/login", data={"username": "john", "password": "admin-password-123"})
+        c.post("/welcome", data={"training": "own"})  # finish admin setup if this test runs first
+        c.post("/welcome/done")
+        assert "Edit (admin)" in c.get(f"/runs/{run_id}").text
+        r = c.post(f"/admin/runs/{run_id}/activity", data={"activity": "walk"})
+        assert "log is now a walk" in r.text
+        with SessionLocal() as s:
+            run = s.get(Run, run_id)
+            assert run.activity == "walk" and run.user_id != 0
+        # Full edit as admin keeps it as their log.
+        page = c.get(f"/runs/{run_id}/edit").text
+        assert "Admin edit" in page
+        c.post(f"/runs/{run_id}/edit", data={"date": "2026-10-21", "activity": "walk", "distance": "2.2", "time": "36:00"})
+        with SessionLocal() as s:
+            run = s.get(Run, run_id)
+            owner = s.get(__import__("app.models", fromlist=["User"]).User, run.user_id)
+            assert run.distance_mi == 2.2 and owner.username == "oldwalker"
+
+
+def test_event_photos():
+    with client() as c:
+        signup(c, "shutterbug")
+        c.post("/welcome", data={"training": "own"})
+        c.post("/welcome/done")
+        from datetime import date as _date, timedelta as _td
+        with SessionLocal() as s:  # its own runs, so other tests moving dates around can't interfere
+            today_run = Meetup(date=_date(2026, 10, 22), slot="club", title="Photo Test Run")  # "today" in tests
+            future = Meetup(date=_date(2026, 10, 22) + _td(days=3), slot="club", title="Later Run")
+            s.add_all([today_run, future])
+            s.commit()
+
+        # Not before the run day.
+        r = c.post(f"/meetups/{future.id}/photos", files=[("photos", ("a.jpg", _jpeg_bytes(), "image/jpeg"))])
+        assert "Photos open on the day of the run" in r.text
+
+        r = c.post(f"/meetups/{today_run.id}/photos", files=[
+            ("photos", ("a.jpg", _jpeg_bytes(), "image/jpeg")),
+            ("photos", ("b.png", _jpeg_bytes("#1f4a37"), "image/jpeg")),
+        ])
+        msg = [l.strip() for l in r.text.splitlines() if 'class="ok"' in l or 'class="error"' in l]
+        assert "Added 2 photos" in r.text and r.text.count('class="gallery-item"') == 2, msg
+        ids = [int(x) for x in __import__("re").findall(r'/photos/(\d+)/thumb\.jpg', r.text)]
+        thumb = c.get(f"/photos/{ids[0]}/thumb.jpg")
+        full = c.get(f"/photos/{ids[0]}.jpg")
+        assert thumb.headers["content-type"] == "image/jpeg" and len(thumb.content) < len(full.content)
+        assert Image.open(BytesIO(full.content)).size == (1200, 900)
+        assert "See photos from this event (2)" in c.get("/schedule?past=1").text
+
+        bad = c.post(f"/meetups/{today_run.id}/photos", files=[("photos", ("x.jpg", b"nope", "image/jpeg"))])
+        assert "read one of those as a photo" in bad.text
+        c.post("/logout")
+
+        # Someone else can't delete it; the admin can.
+        signup(c, "nosy")
+        c.post("/welcome", data={"training": "own"})
+        c.post("/welcome/done")
+        assert c.post(f"/photos/{ids[0]}/delete").status_code == 403
+        c.post("/logout")
+        c.post("/login", data={"username": "john", "password": "admin-password-123"})
+        c.post("/welcome", data={"training": "own"})  # finish admin setup if this test runs first
+        c.post("/welcome/done")
+        r = c.post(f"/photos/{ids[0]}/delete")
+        assert "Photo removed" in r.text and r.text.count('class="gallery-item"') == 1
+        assert c.get(f"/photos/{ids[0]}.jpg").status_code == 404
+
+
+def test_photo_buttons_on_run_cards():
+    from datetime import date as _date, timedelta as _td
+
+    with client() as c:
+        signup(c, "cardphotos")
+        c.post("/welcome", data={"training": "own"})
+        c.post("/welcome/done")
+        with SessionLocal() as s:
+            today_run = Meetup(date=_date(2026, 10, 22), slot="club", title="Card Photo Run")
+            later = Meetup(date=_date(2026, 10, 22) + _td(days=2), slot="club", title="Card Later Run")
+            s.add_all([today_run, later])
+            s.commit()
+        sched = c.get("/schedule").text
+        assert f'action="/meetups/{today_run.id}/photos"' in sched      # run day: can add from the card
+        assert f'action="/meetups/{later.id}/photos"' not in sched      # future run: no button yet
+        assert f'href="/meetups/{today_run.id}#photos">See photos' not in sched
+        c.post(f"/meetups/{today_run.id}/photos", files=[("photos", ("a.jpg", _jpeg_bytes(), "image/jpeg"))])
+        assert f'href="/meetups/{today_run.id}#photos">See photos from this event (1)' in c.get("/schedule").text

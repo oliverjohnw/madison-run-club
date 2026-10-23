@@ -128,6 +128,22 @@ class Kudos(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
 
 
+class MeetupPhoto(Base):
+    """A photo someone added to a club run. JPEGs live in the database (Railway's disk is
+    wiped on deploy); deferred so listing photos doesn't load the image bytes."""
+
+    __tablename__ = "meetup_photos"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    meetup_id: Mapped[int] = mapped_column(ForeignKey("meetups.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    image: Mapped[bytes] = mapped_column(LargeBinary, deferred=True)
+    thumb: Mapped[bytes] = mapped_column(LargeBinary, deferred=True)
+    width: Mapped[int] = mapped_column(Integer)
+    height: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
 class RaceVote(Base):
     """One row per (member, race day that works for them). Members can pick several days.
     Replaced the old one-vote-per-person `race_votes` table; see seed.migrate_race_votes."""

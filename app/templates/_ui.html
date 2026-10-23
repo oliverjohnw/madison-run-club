@@ -93,6 +93,19 @@
     {% if not compact and m.details %}<p class="small muted ticket-details">{{ m.details }}</p>{% endif %}
     {% set wk = week_of(m.date) %}
     {% if m.slot == "club" and user.follows_plan and 1 <= wk <= 6 %}<a class="link small" href="/plan#week-{{ wk }}" style="display:inline-block;margin-top:8px">Check out this week's workout →</a>{% endif %}
+    {% set can_photo = not m.canceled and m.date <= club_today() %}
+    {% if can_photo or r.get("photos") %}
+    <div class="ticket-photos">
+      {% if can_photo %}
+      <form method="post" action="/meetups/{{ m.id }}/photos" enctype="multipart/form-data">
+        <label class="btn ghost small" style="cursor:pointer">📷 Add photo
+          <input type="file" name="photos" accept="image/*" multiple class="sr-only" onchange="this.form.submit()" />
+        </label>
+      </form>
+      {% endif %}
+      {% if r.get("photos") %}<a class="link small" href="/meetups/{{ m.id }}#photos">See photos from this event ({{ r.photos }}) →</a>{% endif %}
+    </div>
+    {% endif %}
     {% if not m.canceled %}
     <div class="row" style="margin-top:12px">
       {{ rsvp_buttons(m, r["by_user"].get(user.id), next) }}

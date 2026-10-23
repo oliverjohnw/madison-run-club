@@ -26,7 +26,7 @@ from starlette.staticfiles import StaticFiles  # noqa: E402
 import app.models  # noqa: E402,F401  (registers tables before init_db)
 from app.auth import AuthGateMiddleware, ensure_admin_user  # noqa: E402
 from app.db import init_db  # noqa: E402
-from app.routes import account, admin, home, plan, race, runs, schedule, welcome  # noqa: E402
+from app.routes import account, admin, home, photos, plan, race, runs, schedule, welcome  # noqa: E402
 from app.routes.deps import StaleSession  # noqa: E402
 from app.seed import backfill_training, migrate_race_votes, seed_meetups  # noqa: E402
 from app.templating import render  # noqa: E402
@@ -56,7 +56,7 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-for module in (account, welcome, home, schedule, runs, plan, race, admin):
+for module in (account, welcome, home, schedule, photos, runs, plan, race, admin):
     app.include_router(module.router)
 
 

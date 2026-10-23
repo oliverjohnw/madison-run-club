@@ -3,13 +3,14 @@
 from collections import defaultdict
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import club
 from app.db import SessionLocal
-from app.models import Meetup, Rsvp, Run, User
+from app.models import Meetup, MeetupPhoto, Rsvp, Run, User
 from app.routes.deps import back, me, users_by_id
+from app.routes.photos import can_add_photos
 from app.templating import render
 
 router = APIRouter()
@@ -17,12 +18,16 @@ STATUSES = ("in", "solo", "out")
 
 
 def rsvp_map(session: Session, meetup_ids: list[int]) -> dict[int, dict]:
-    """{meetup_id: {"in": [user_id...], "solo": [...], "out": [...], "by_user": {user_id: status}}}"""
-    out: dict[int, dict] = defaultdict(lambda: {"in": [], "solo": [], "out": [], "by_user": {}})
+    """{meetup_id: {"in": [user_id...], "solo": [...], "out": [...], "by_user": {user_id: status}, "photos": n}}"""
+    out: dict[int, dict] = defaultdict(lambda: {"in": [], "solo": [], "out": [], "by_user": {}, "photos": 0})
     if meetup_ids:
         for r in session.scalars(select(Rsvp).where(Rsvp.meetup_id.in_(meetup_ids)).order_by(Rsvp.updated_at)):
             out[r.meetup_id][r.status].append(r.user_id)
             out[r.meetup_id]["by_user"][r.user_id] = r.status
+        counts = session.execute(select(MeetupPhoto.meetup_id, func.count(MeetupPhoto.id))
+                                 .where(MeetupPhoto.meetup_id.in_(meetup_ids)).group_by(MeetupPhoto.meetup_id))
+        for mid, n in counts:
+            out[mid]["photos"] = n
     return out
 
 
@@ -66,6 +71,7 @@ def meetup_page(request: Request, meetup_id: int, user: User = Depends(me)):
         rsvps = rsvp_map(session, [m.id])[m.id]
         users = users_by_id(session)
         logged = list(session.scalars(select(Run).where(Run.meetup_id == m.id).order_by(Run.distance_mi.desc())))
+        photos = list(session.scalars(select(MeetupPhoto).where(MeetupPhoto.meetup_id == m.id).order_by(MeetupPhoto.id)))
     # What each plan's club workout is that week, so a mixed group knows what everyone's doing.
     workouts = []
     for key, plan in (club.plans_config().items() if m.slot == "club" else []):
@@ -74,8 +80,11 @@ def meetup_page(request: Request, meetup_id: int, user: User = Depends(me)):
         if wk:
             workouts.append({"key": key, "plan": plan, "session": wk["sessions"]["club"], "mine": mine})
     workouts.sort(key=lambda w: not w["mine"])
-    return render(request, "meetup.html", {"m": m, "rsvps": rsvps, "users": users, "logged": logged,
-                                           "workouts": workouts, "week_n": club.week_number(m.date)})
+    return render(request, "meetup.html", {
+        "m": m, "rsvps": rsvps, "users": users, "logged": logged, "workouts": workouts,
+        "week_n": club.week_number(m.date), "photos": photos, "can_add_photos": can_add_photos(m),
+        "photo_msg": request.session.pop("photo_msg", None), "photo_ok": request.session.pop("photo_ok", None),
+    })
 
 
 @router.post("/meetups/{meetup_id}/rsvp")

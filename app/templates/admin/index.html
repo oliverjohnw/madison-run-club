@@ -42,6 +42,38 @@
   <p class="tiny muted" style="margin-top:8px">Quiz answers: mile time · longest run · how often.</p>
 </section>
 
+<section class="section" id="logs">
+  <div class="section-head"><h2 class="h2">Logs</h2><span class="kicker">newest first</span></div>
+  <p class="small muted" style="margin-top:-6px">Switch any log between Run, Walk and Bike. To change the distance, time or notes, open the log and hit "Edit (admin)".</p>
+  {% if log_saved %}<div class="ok">{{ log_saved }}</div>{% endif %}
+  {% if logs %}
+  <div class="card flush scroll-x">
+    <table class="table">
+      <thead><tr><th>Member</th><th>Date</th><th>Log</th><th>Distance</th><th>Pace</th><th>Type</th></tr></thead>
+      <tbody>
+        {% for r in logs %}
+        {% set who = members_by_id.get(r.user_id) %}
+        <tr>
+          <td style="white-space:nowrap">{% if who %}<span class="row" style="gap:6px;flex-wrap:nowrap">{{ ui.avatar(who, "xs") }}{{ who.name }}</span>{% endif %}</td>
+          <td style="white-space:nowrap">{{ r.date|short }}</td>
+          <td><a class="link" href="/runs/{{ r.id }}">{{ r.title }}</a></td>
+          <td class="tabular" style="white-space:nowrap">{{ "%.2f"|format(r.distance_mi) }} mi</td>
+          <td class="tabular" style="white-space:nowrap">{{ ("%.1f mph"|format(r.speed_mph)) if r.is_bike else (r.pace_sec|clock ~ "/mi") }}</td>
+          <td>
+            <form method="post" action="/admin/runs/{{ r.id }}/activity" class="log-type">
+              {% for k, label in ACTIVITIES.items() %}
+              <button name="activity" value="{{ k }}" class="{{ 'on' if r.activity == k }}" aria-pressed="{{ 'true' if r.activity == k else 'false' }}">{{ label }}</button>
+              {% endfor %}
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="empty">No logs yet.</div>{% endif %}
+</section>
+
 <section class="section" id="race">
   <div class="section-head"><h2 class="h2">Race day</h2></div>
   <div class="card">
