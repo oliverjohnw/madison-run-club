@@ -162,6 +162,8 @@ suggests the Finish It plan. Logic and answer options are in `app/quiz.py`.
    - **Don't** set `CLUB_TODAY` in production.
 5. **Settings > Networking > Generate Domain**, then share the link and the club code.
 
+The live service is connected to this repo, so every push to `main` deploys automatically.
+
 The first boot creates the tables, your admin login and the schedule. Adding a column to a model
 later is handled automatically on startup (see `app/db.py`).
 
