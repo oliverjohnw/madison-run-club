@@ -29,7 +29,7 @@
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
       <label class="field"><span>Date</span><input class="input" type="date" name="date" required value="{{ form.date }}" max="{{ today.isoformat() }}" /></label>
       <label class="field"><span>Distance (mi)</span><input class="input" id="distance" name="distance" required inputmode="decimal" placeholder="3.1" value="{{ form.distance or '' }}" /></label>
-      <label class="field"><span>Time</span><input class="input" id="time" name="time" required inputmode="numeric" placeholder="28:30" value="{{ form.time or '' }}" autocomplete="off" /><small>Just type the numbers: 2830 → 28:30</small></label>
+      <label class="field"><span>Time</span><input class="input" id="time" name="time" required inputmode="numeric" placeholder="28:30" value="{{ form.time or '' }}" autocomplete="off" /></label>
     </div>
 
     <div class="pace-preview">
