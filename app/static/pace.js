@@ -1,5 +1,14 @@
-// Live hints: "That's a 26:24 5K" under goal-pace inputs, and the pace preview on the run log form.
+// Run log form: colons typed for you in the Time box, plus a live pace (or mph for rides) preview.
 (function () {
+  // "2430" -> "24:30", "12010" -> "1:20:10". Up to 2 digits stay as typed (= minutes).
+  // Matches club.parse_clock on the server, so it also works if this script doesn't run.
+  function withColons(raw) {
+    const d = raw.replace(/\D/g, '').replace(/^0+(?=\d{3})/, '').slice(0, 6);
+    if (d.length <= 2) return d;
+    if (d.length <= 4) return d.slice(0, -2) + ':' + d.slice(-2);
+    return d.slice(0, -4) + ':' + d.slice(-4, -2) + ':' + d.slice(-2);
+  }
+
   function parse(t) {
     t = (t || '').trim();
     if (!t) return null;
@@ -12,16 +21,6 @@
     s = Math.round(s);
     const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
     return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(sec).padStart(2, '0');
-  }
-
-  const pace = document.getElementById('pace'), paceOut = document.getElementById('pace-out');
-  if (pace && paceOut) {
-    const upd = () => {
-      const p = parse(pace.value);
-      paceOut.textContent = p && p > 180 ? "That's a " + clock(p * 3.107) + ' 5K.' : '';
-    };
-    pace.addEventListener('input', upd);
-    upd();
   }
 
   // Runs and walks show pace (min/mi); rides show speed (mph).
@@ -38,7 +37,11 @@
       out.textContent = bike ? (d / (t / 3600)).toFixed(1) : clock(t / d);
     };
     dist.addEventListener('input', upd);
-    time.addEventListener('input', upd);
+    time.addEventListener('input', () => {
+      const formatted = withColons(time.value);
+      if (formatted !== time.value) time.value = formatted;
+      upd();
+    });
     document.querySelectorAll('input[name=activity]').forEach((r) => r.addEventListener('change', upd));
     upd();
   }

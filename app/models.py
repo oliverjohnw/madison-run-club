@@ -42,13 +42,8 @@ class User(Base):
     avatar_version: Mapped[int] = mapped_column(Integer, default=0)
     has_avatar: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    # Training. training = "plan" (follows a recommended plan) or "own" (does their own
-    # workouts); "" until they choose. goal_pace_sec is None for "just finish" / own.
-    training: Mapped[str] = mapped_column(String(8), server_default="")
-    plan_key: Mapped[str] = mapped_column(String(16), server_default="")
-    goal_pace_sec: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    days: Mapped[str] = mapped_column(String(32), server_default="")  # unused since the switch to one meetup a week
-    quiz: Mapped[str] = mapped_column(String(200), server_default="")  # "mile=8-930;longest=1;often=rare"
+    # Old training-plan columns (training, plan_key, goal_pace_sec, days, quiz) may still exist in
+    # the database from before plans were removed; nothing reads them and they all have defaults.
     onboarded: Mapped[bool] = mapped_column(Boolean, default=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
@@ -61,9 +56,6 @@ class User(Base):
     def first_name(self) -> str:
         return self.name.split()[0]
 
-    @property
-    def follows_plan(self) -> bool:
-        return self.training == "plan" and bool(self.plan_key)
 
 
 class Meetup(Base):

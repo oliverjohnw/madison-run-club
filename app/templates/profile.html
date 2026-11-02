@@ -9,15 +9,9 @@
       <div class="bib-num">{{ "%02d"|format(person.id) }}<span>.</span></div>
       <h1 class="display" style="font-size:2.2rem;margin-top:6px">{{ person.name }}</h1>
       <div class="small muted">@{{ person.username }}{% if person.tagline %} · {{ person.tagline }}{% endif %}</div>
-      <div class="row" style="gap:6px;margin-top:10px">
-        {% if plan and person.follows_plan %}<a href="/plan?show={{ person.plan_key }}" class="pill pine" style="text-decoration:none">{{ plan.name }}</a>{% endif %}
-        {% if person.follows_plan %}<span class="pill">{{ (person.goal_pace_sec|clock ~ "/mi goal") if person.goal_pace_sec else "Goal: finish" }}</span>{% endif %}
-        {% if person.training == "own" %}<span class="pill">Own workouts</span>{% endif %}
-      </div>
     </div>
     {% if is_me %}
     <div class="row" style="align-self:flex-start">
-      <a class="btn ghost small" href="/plan">My plan</a>
       <a class="btn ghost small" href="/settings">Settings</a>
       <form method="post" action="/logout"><button class="btn ghost small">Log out</button></form>
     </div>
@@ -32,7 +26,6 @@
     <div><div class="kicker">Phone</div><div>{% if person.phone %}<a class="link" href="tel:{{ person.phone }}">{{ person.phone }}</a>{% else %}-{% endif %}</div></div>
     <div><div class="kicker">Joined</div><div>{{ person.created_at.date()|day if person.created_at else "-" }}</div></div>
   </div>
-  {% if quiz_answers %}<div class="small muted" style="margin-top:10px">{% for q, a in quiz_answers %}{{ q }} <b style="color:var(--ink)">{{ a }}</b>{{ " · " if not loop.last }}{% endfor %}</div>{% endif %}
 </div>
 {% endif %}
 
@@ -70,9 +63,6 @@
     <div class="display" style="font-size:3rem;margin-top:8px">{{ s.best_5k|clock }}</div>
     <p class="small muted" style="margin:4px 0 0">
       From the best run of a mile or more.
-      {% if person.goal_pace_sec %}Goal is {{ (person.goal_pace_sec * 3.107)|clock }}
-        {% if s.best_5k <= person.goal_pace_sec * 3.107 %}. <b class="pine">Already there.</b>{% else %} ({{ (s.best_5k - person.goal_pace_sec * 3.107)|clock }} to go).{% endif %}
-      {% endif %}
     </p>
     {% else %}
     <div class="display muted" style="font-size:3rem;margin-top:8px">--:--</div>
@@ -87,7 +77,7 @@
     {{ viz.weekly_bars(bars) }}
   </div>
   <div class="card">
-    <div class="card-head"><h3 class="h3">Every day of the plan</h3></div>
+    <div class="card-head"><h3 class="h3">Every day of the season</h3></div>
     {{ viz.heatmap(heat) }}
   </div>
 </div>

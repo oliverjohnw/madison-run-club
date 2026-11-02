@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Mono:wght@500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/club.css?v=19" />
+  <link rel="stylesheet" href="/static/club.css?v=20" />
   {% block head %}{% endblock %}
 </head>
 <body>
@@ -25,7 +25,7 @@
       </a>
       {% if user and user.onboarded %}
       <nav class="nav" aria-label="Main">
-        {% for href, label in [("/", "Home"), ("/schedule", "Schedule"), ("/plan", "My plan"), ("/feed", "Feed"), ("/club", "Club")] %}
+        {% for href, label in [("/", "Home"), ("/schedule", "Schedule"), ("/feed", "Feed"), ("/club", "Club")] %}
         <a href="{{ href }}" {% if (path == href) or (href != "/" and path.startswith(href)) %}aria-current="page"{% endif %}>{{ label }}</a>
         {% endfor %}
         {% if user.is_admin %}<a href="/admin" {% if path.startswith("/admin") %}aria-current="page"{% endif %}>Admin</a>{% endif %}

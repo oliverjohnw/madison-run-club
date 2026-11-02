@@ -10,7 +10,7 @@
 
 <div class="stats three">
   <div class="stat"><div class="num">{{ total_miles|miles }}<small>mi</small></div><div class="lbl">Club miles on foot{% if bike_miles %} · +{{ bike_miles|miles }} biked{% endif %}</div></div>
-  <div class="stat"><div class="num">{{ total_runs }}</div><div class="lbl">Workouts logged</div></div>
+  <div class="stat"><div class="num">{{ total_runs }}</div><div class="lbl">Activities logged</div></div>
   <div class="stat"><div class="num">{{ (total_seconds / 3600)|round(1) }}<small>hr</small></div><div class="lbl">Time on feet</div></div>
 </div>
 
@@ -82,7 +82,6 @@
       <div style="min-width:0">
         <div style="font-weight:700">{{ m.name }}</div>
         <div class="small muted">@{{ m.username }}</div>
-        {% if m.plan_key in plans %}<span class="pill pine" style="margin-top:6px">{{ plans[m.plan_key].name }}</span>{% endif %}
       </div>
     </a>
     {% endfor %}

@@ -190,7 +190,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .private::before { content: "Only John (admin) sees this"; position: absolute; top: -10px; left: 12px; background: var(--card); padding: 0 6px;
   font-family: var(--mono); font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 
-/* Big choice tiles (quiz, goal, effort) */
+/* Big choice tiles (Run / Walk / Bike, effort) */
 .choices { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); }
 .choice { position: relative; }
 .choice input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
@@ -337,27 +337,6 @@ textarea.input { min-height: 90px; resize: vertical; }
 .board .track div { height: 100%; background: var(--pine); border-radius: 3px; }
 .board .mi { font-family: var(--display); font-weight: 800; font-size: 1.25rem; }
 
-/* Plan table */
-.plan-week { display: grid; grid-template-columns: 1fr; border-top: 1px solid var(--line); }
-@media (min-width: 860px) { .plan-week { grid-template-columns: 150px 1.25fr 1fr 1fr; } }
-.plan-week:first-of-type { border-top: 0; }
-.plan-week > div { padding: 14px 16px; }
-.plan-week .wk-label { background: var(--paper-2); }
-@media (max-width: 859px) { .plan-week > div + div { border-top: 1px dashed var(--line); } }
-@media (min-width: 860px) { .plan-week > div + div { border-left: 1px dashed var(--line); } }
-.plan-week.now .wk-label { background: var(--blaze); color: var(--on-blaze); }
-.plan-week.now .wk-label .kicker { color: inherit; opacity: .85; }
-.plan-week.past { opacity: .55; }
-.session .slot { font-family: var(--mono); font-size: .64rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
-.session .t { font-weight: 700; }
-.session .w { font-size: .88rem; color: var(--ink-2); margin-top: 2px; }
-.session.yours .slot::after { content: "your day"; color: var(--pine); background: var(--pine-soft); padding: 1px 6px; border-radius: 99px; letter-spacing: .08em; white-space: nowrap; }
-.session .slot { flex-wrap: wrap; }
-.session.main .t { color: var(--blaze); }
-.plan-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
-.plan-tabs a { text-decoration: none; padding: 7px 12px; border-radius: 99px; border: 1.5px solid var(--line-2); font-weight: 600; font-size: .85rem; }
-.plan-tabs a[aria-current="page"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-
 /* Countdown */
 .countdown { background: var(--ink); color: var(--paper); border-radius: var(--radius); padding: 18px; position: relative; overflow: hidden; }
 .countdown .num { font-family: var(--display); font-weight: 900; font-size: 4.6rem; line-height: .8; color: var(--blaze); }
@@ -367,10 +346,6 @@ textarea.input { min-height: 90px; resize: vertical; }
 /* Hero */
 .hero { display: flex; justify-content: space-between; gap: 20px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 22px; }
 
-/* Steps (welcome) */
-.steps { display: flex; gap: 6px; margin-bottom: 18px; }
-.steps i { height: 5px; flex: 1; border-radius: 3px; background: var(--line); }
-.steps i.on { background: var(--blaze); }
 .narrow { max-width: 620px; margin: 0 auto; }
 .auth { max-width: 440px; margin: 0 auto; }
 
@@ -410,7 +385,6 @@ fieldset { min-width: 0; }
 details summary::marker { color: var(--blaze); }
 
 /* Misc page bits */
-.workout { border-left: 4px solid var(--blaze); }
 .readiness { position: relative; height: 12px; border-radius: 6px; background: var(--paper-2); border: 1px solid var(--line); margin-top: 10px; }
 .readiness div { height: 100%; border-radius: 6px; background: repeating-linear-gradient(-45deg, var(--pine) 0 8px, var(--pine-2) 8px 16px); }
 .pace-preview { display: flex; align-items: baseline; gap: 10px; padding: 10px 14px; margin: 0 0 16px; background: var(--paper-2); border-radius: 8px; }
@@ -446,23 +420,6 @@ a.card:hover, a.countdown:hover { border-color: var(--ink-2); }
   .wide-only { display: none; }
 }
 
-/* Workouts, one piece per line */
-.steps-list { list-style: none; margin: 4px 0 0; padding: 0; }
-.steps-list li { position: relative; padding-left: 14px; }
-.steps-list li + li { margin-top: 3px; }
-.steps-list li::before { content: ""; position: absolute; left: 0; top: .62em; width: 6px; height: 6px; border-radius: 50%; background: var(--line-2); }
-.session.main .steps-list li::before { background: var(--blaze); }
-
-/* Plan picker (welcome step 2) */
-.plan-pick { display: block; width: 100%; text-align: left; cursor: pointer; background: var(--card); border: 1.5px solid var(--line); border-radius: var(--radius); padding: 14px 16px; transition: border-color .12s, transform .12s; }
-.plan-pick:hover { border-color: var(--pine); transform: translateY(-1px); }
-.plan-pick:has(input:checked) { border: 2px solid var(--blaze); background: var(--blaze-soft); }
-.plan-pick:has(input:checked) .plan-pick-head::after { content: "Selected"; font-family: var(--mono); font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: var(--blaze); }
-.plan-pick:has(input:focus-visible) { outline: 3px solid color-mix(in srgb, var(--blaze) 60%, transparent); outline-offset: 2px; }
-.plan-pick.suggested { border: 2px solid var(--pine); }
-.plan-pick-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.plan-pick-head > .display { margin-right: auto; }
-
 .rsvp-counts b { color: var(--ink); font-weight: 700; }
 .legend-list { list-style: none; margin: -8px 0 22px; padding: 0; }
 .legend-list li + li { margin-top: 2px; }
@@ -470,7 +427,6 @@ a.card:hover, a.countdown:hover { border-color: var(--ink-2); }
 
 /* One run a week */
 .schedule-list { max-width: 760px; display: grid; gap: 30px; }
-.own-mode { border: 2px solid var(--pine); }
 
 /* Admin quick editor */
 .quick-edit { display: grid; gap: 4px 12px; grid-template-columns: 1fr; align-items: end; }
@@ -486,15 +442,6 @@ a.card:hover, a.countdown:hover { border-color: var(--ink-2); }
 
 .ticket .stub-time { font-family: var(--mono); font-size: .66rem; font-weight: 500; letter-spacing: .04em; margin-top: 8px; padding-top: 6px; border-top: 1px solid currentColor; opacity: .9; white-space: nowrap; }
 .ticket-details { margin: 8px 0 0; white-space: pre-line; }
-.plan-week { scroll-margin-top: 76px; }
-
-/* Plan weeks with no club run */
-.solo-pill { margin-top: 8px; background: var(--lake); border-color: var(--lake); color: var(--card); }
-.plan-week.now .solo-pill { background: var(--on-blaze); color: var(--blaze); border-color: var(--on-blaze); }
-.solo-note { margin: 4px 0 8px; padding: 8px 10px; border-radius: 6px; background: var(--lake-soft); border-left: 3px solid var(--lake); font-size: .85rem; color: var(--ink); }
-.solo-note a { color: var(--lake); font-weight: 600; }
-.solo-banner { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; margin-bottom: 14px; border-radius: var(--radius); background: var(--lake); color: var(--card); }
-.solo-banner a { color: inherit; }
 
 /* Run / Walk / Bike */
 .act-icon { width: 1.15em; height: 1.15em; flex-shrink: 0; }

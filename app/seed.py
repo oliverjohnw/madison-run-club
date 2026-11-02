@@ -1,10 +1,10 @@
 """First-run setup: put the club runs from config/club.yaml on the schedule."""
 
-from sqlalchemy import func, inspect, select, text, update
+from sqlalchemy import func, inspect, select, text
 
 from app import club
 from app.db import SessionLocal, engine
-from app.models import ClubSetting, Meetup, RaceVote, User
+from app.models import ClubSetting, Meetup, RaceVote
 
 
 def seed_meetups() -> int:
@@ -19,14 +19,6 @@ def seed_meetups() -> int:
                                details=(m.get("details") or "").strip(), is_event=bool(m.get("event"))))
         session.commit()
         return len(rows)
-
-
-def backfill_training() -> None:
-    """Members who signed up before the plan / own-workouts choice existed: keep their plan."""
-    with SessionLocal() as session:
-        session.execute(update(User).where(User.training == "", User.plan_key != "", User.onboarded.is_(True))
-                        .values(training="plan"))
-        session.commit()
 
 
 def migrate_race_votes() -> None:

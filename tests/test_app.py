@@ -19,12 +19,6 @@ def signup(c, username="jen", **extra):
     return c.post("/signup", data=data)
 
 
-def plan_path(c, quiz=("8-930", "2-3", "1-2"), goal=None):
-    c.post("/welcome", data={"training": "plan"})
-    c.post("/welcome/quiz", data=dict(zip(("mile", "longest", "often"), quiz)))
-    return c.post("/welcome/goal", data=goal or {"choice": "accept"})
-
-
 def first_club_run() -> Meetup:
     with SessionLocal() as s:
         return s.scalars(select(Meetup).where(Meetup.slot == "club").order_by(Meetup.date)).first()
@@ -54,37 +48,25 @@ def _all_club_runs():
             return list(s.scalars(select(Meetup).where(Meetup.slot == "club").order_by(Meetup.date)))
 
 
-def test_plan_member_flow():
+def test_member_flow():
     with client() as c:
         r = signup(c)
-        assert r.url.path == "/welcome" and "How do you want to train?" in r.text
-        assert c.get("/schedule", follow_redirects=False).headers["location"] == "/welcome"  # setup first
-
-        r = c.post("/welcome", data={"training": "plan"})
-        assert r.url.path == "/welcome/quiz" and "Step 2 of 4" in r.text
-        r = c.post("/welcome/quiz", data={"mile": "8-930", "longest": "2-3", "often": "1-2"})
-        assert r.url.path == "/welcome/goal" and "Suggested 5K goal" in r.text
-        r = c.post("/welcome/goal", data={"choice": "custom", "pace": "8:00"})
-        assert r.url.path == "/welcome/photo" and "Step 4 of 4" in r.text
+        assert r.url.path == "/welcome" and "Add a profile picture?" in r.text
+        assert c.get("/schedule", follow_redirects=False).headers["location"] == "/welcome"  # welcome step first
         r = c.post("/welcome/done")
-        assert r.url.path == "/plan" and "Push It" in r.text and "8:00/mi" in r.text
-        assert "<li>10 min easy" in r.text  # workouts render one piece per line
-        assert "Club run · Thu Oct 22" in r.text  # week 2's club workout is tied to that week's meetup
-
-        home = c.get("/").text
-        assert "Hey, Jen" in home and 'href="/plan#week-2"' in home  # "Check out this week's workout" on the next club run
+        assert r.url.path == "/" and "Hey, Jen" in r.text and "Next up" in r.text
 
         m = first_club_run()
         r = c.post(f"/meetups/{m.id}/rsvp", data={"status": "in"})
         assert r.status_code == 200 and 'aria-pressed="true"' in r.text
         meetup_page = c.get(f"/meetups/{m.id}").text
-        assert "What everyone" not in meetup_page and 'id="photos"' in meetup_page
+        assert 'id="photos"' in meetup_page
 
         r = c.post("/log", data={"date": "2026-10-22", "distance": "3.2", "time": "27:12", "meetup_id": str(m.id), "effort": "3"})
         assert "/runs/" in str(r.url) and "Logged." in r.text and "8:30" in r.text
         assert c.post("/log", data={"date": "2026-10-20", "distance": "3", "time": "2:00"}).status_code == 400
 
-        for path in ["/feed", "/club", "/race", "/u/jen", "/plan?show=send", "/settings", "/log", "/schedule"]:
+        for path in ["/feed", "/club", "/race", "/u/jen", "/settings", "/log", "/schedule"]:
             assert c.get(path).status_code == 200, path
 
         # Race day: several days can be picked, and clicking one again takes it back off.
@@ -100,28 +82,21 @@ def test_plan_member_flow():
         assert "Jen Runner" in profile and "secret-mail" not in profile and "0199" not in profile
         assert c.get("/admin").status_code == 403
 
-        # Dropping the plan.
-        r = c.post("/plan/own")
-        assert "Your own thing" in r.text and "Get a recommended plan" in r.text
 
-
-def test_own_workouts_flow():
+def test_training_plans_are_gone():
     with client() as c:
-        signup(c, "freestyle")
-        r = c.post("/welcome", data={"training": "own"})
-        assert r.url.path == "/welcome/photo" and "Step 2 of 2" in r.text
-        r = c.post("/welcome/done")
-        assert r.url.path == "/" and "Next up" in r.text
-        assert "Your own thing" in c.get("/plan").text
-        # Picking a plan later from the plan page.
-        r = c.post("/plan/goal", data={"choice": "plan", "plan": "chase"})
-        assert "Chase It" in r.text and "Stop following a plan" in r.text
+        signup(c, "noplans")
+        c.post("/welcome/done")
+        for path in ["/plan", "/welcome/quiz", "/welcome/goal"]:
+            assert c.get(path).status_code == 404, path
+        for path in ["/", "/schedule", "/u/noplans", "/club"]:
+            page = c.get(path).text
+            assert 'href="/plan' not in page and "this week's workout" not in page, path
 
 
 def test_admin_private_info_quick_edit_and_kudos():
     with client() as c:
         signup(c, "kudosgiver")
-        plan_path(c, ("idk", "none", "0"))
         c.post("/welcome/done")
         with SessionLocal() as s:
             run = s.scalars(select(Run)).first()
@@ -130,8 +105,7 @@ def test_admin_private_info_quick_edit_and_kudos():
         c.post("/logout")
 
         c.post("/login", data={"username": "john", "password": "admin-password-123"})
-        plan_path(c, goal={"choice": "plan", "plan": "cruise"})
-        assert "Cruise It" in c.post("/welcome/done").text
+        c.post("/welcome/done")
         admin = c.get("/admin")
         assert admin.status_code == 200 and "jen@secret-mail.example" in admin.text and "608-555-0199" in admin.text
 
@@ -153,12 +127,11 @@ def test_photo_step_upload():
     Image.new("RGB", (900, 600), "#1f4a37").save(buf, "JPEG")
     with client() as c:
         signup(c, "photo.person")
-        plan_path(c, ("7-8", "2-3", "1-2"))
-        r = c.post("/settings/avatar?next=/welcome/photo", files={"photo": ("me.jpg", buf.getvalue(), "image/jpeg")})
-        assert r.url.path == "/welcome/photo" and "Looking good." in r.text
-        bad = c.post("/settings/avatar?next=/welcome/photo", files={"photo": ("x.jpg", b"not an image", "image/jpeg")})
-        assert bad.status_code == 400 and "Step 4 of 4" in bad.text
-        assert c.post("/welcome/done").url.path == "/plan"
+        r = c.post("/settings/avatar?next=/welcome", files={"photo": ("me.jpg", buf.getvalue(), "image/jpeg")})
+        assert r.url.path == "/welcome" and "Looking good." in r.text
+        bad = c.post("/settings/avatar?next=/welcome", files={"photo": ("x.jpg", b"not an image", "image/jpeg")})
+        assert bad.status_code == 400 and "Add a profile picture?" in bad.text
+        assert c.post("/welcome/done").url.path == "/"
 
 
 def test_deleted_account_cookie_goes_to_login():
@@ -188,7 +161,6 @@ def test_home_shows_only_the_next_run_all_day():
     """Conftest pretends it's Thu Oct 22: that day's run is still the one on the home page."""
     with client() as c:
         signup(c, "homebody")
-        c.post("/welcome", data={"training": "own"})
         home = c.post("/welcome/done").text
         assert home.count('class="ticket ') == 1
         assert "Wilsons Bar" in home or "Club Run" in home
@@ -198,7 +170,6 @@ def test_home_shows_only_the_next_run_all_day():
 def test_log_walk_and_bike():
     with client() as c:
         signup(c, "multisport")
-        c.post("/welcome", data={"training": "own"})
         c.post("/welcome/done")
         r = c.post("/log", data={"date": "2026-10-21", "activity": "bike", "distance": "18", "time": "1:12:00"})
         assert r.url.path.startswith("/runs/") and "15.0" in r.text and "mph" in r.text and "Wednesday ride" in r.text
@@ -221,7 +192,6 @@ def _jpeg_bytes(color="#df5420", size=(1200, 900)):
 def test_admin_can_fix_anyones_log():
     with client() as c:
         signup(c, "oldwalker")
-        c.post("/welcome", data={"training": "own"})
         c.post("/welcome/done")
         r = c.post("/log", data={"date": "2026-10-21", "activity": "run", "distance": "2", "time": "36:00"})
         run_id = int(r.url.path.split("/")[2])
@@ -230,7 +200,6 @@ def test_admin_can_fix_anyones_log():
         c.post("/logout")
 
         c.post("/login", data={"username": "john", "password": "admin-password-123"})
-        c.post("/welcome", data={"training": "own"})  # finish admin setup if this test runs first
         c.post("/welcome/done")
         assert "Edit (admin)" in c.get(f"/runs/{run_id}").text
         r = c.post(f"/admin/runs/{run_id}/activity", data={"activity": "walk"})
@@ -251,7 +220,6 @@ def test_admin_can_fix_anyones_log():
 def test_event_photos():
     with client() as c:
         signup(c, "shutterbug")
-        c.post("/welcome", data={"training": "own"})
         c.post("/welcome/done")
         from datetime import date as _date, timedelta as _td
         with SessionLocal() as s:  # its own runs, so other tests moving dates around can't interfere
@@ -283,12 +251,10 @@ def test_event_photos():
 
         # Someone else can't delete it; the admin can.
         signup(c, "nosy")
-        c.post("/welcome", data={"training": "own"})
         c.post("/welcome/done")
         assert c.post(f"/photos/{ids[0]}/delete").status_code == 403
         c.post("/logout")
         c.post("/login", data={"username": "john", "password": "admin-password-123"})
-        c.post("/welcome", data={"training": "own"})  # finish admin setup if this test runs first
         c.post("/welcome/done")
         r = c.post(f"/photos/{ids[0]}/delete")
         assert "Photo removed" in r.text and r.text.count('class="gallery-item"') == 1
@@ -300,7 +266,6 @@ def test_photo_buttons_on_run_cards():
 
     with client() as c:
         signup(c, "cardphotos")
-        c.post("/welcome", data={"training": "own"})
         c.post("/welcome/done")
         with SessionLocal() as s:
             today_run = Meetup(date=_date(2026, 10, 22), slot="club", title="Card Photo Run")

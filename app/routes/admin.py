@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from sqlalchemy import func, select
 from starlette.responses import RedirectResponse
 
-from app import club, quiz
+from app import club
 from app.auth import hash_password
 from app.db import SessionLocal
 from app.models import ClubSetting, Meetup, Run, User
@@ -28,8 +28,7 @@ def admin_home(request: Request, user: User = Depends(admin_only)):
         logs = list(session.scalars(select(Run).order_by(Run.date.desc(), Run.id.desc()).limit(200)))
     return render(request, "admin/index.html", {
         "members": members, "run_counts": run_counts, "meetups": meetups, "votes": votes,
-        "locked": club.locked_race_date(), "plans": club.plans_config(),
-        "quiz": {m.id: quiz.describe(m.quiz) for m in members},
+        "locked": club.locked_race_date(),
         # One-time display of a freshly reset password (kept out of the URL so it never lands in logs).
         "temp": request.session.pop("temp_password", None),
         "saved": request.session.pop("admin_saved", None),

@@ -6,7 +6,7 @@ admin login is created on startup from ADMIN_USERNAME / ADMIN_PASSWORD.
 
 Sessions are Starlette's signed cookie holding {"user_id": ..., "setup": bool}.
 Signed, not encrypted - never put anything secret in it. "setup" is set while a
-new member still has the welcome quiz to do, so the gate can send them there
+new member still has the welcome step to do, so the gate can send them there
 without a database lookup on every request.
 """
 
@@ -118,7 +118,7 @@ def clear_failed_logins(request: Request) -> None:
 
 
 class AuthGateMiddleware(BaseHTTPMiddleware):
-    """Logged out -> /login. Logged in but quiz not done -> /welcome."""
+    """Logged out -> /login. Logged in but welcome step not done -> /welcome."""
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path

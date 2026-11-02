@@ -31,15 +31,6 @@ def rsvp_map(session: Session, meetup_ids: list[int]) -> dict[int, dict]:
     return out
 
 
-def club_meetups_by_week(meetups) -> dict[int, Meetup]:
-    """{plan week: that week's club run} (first non-canceled one, if a week somehow has two)."""
-    out: dict[int, Meetup] = {}
-    for m in sorted(meetups, key=lambda m: m.date):
-        if m.slot == "club" and not m.canceled:
-            out.setdefault(club.week_number(m.date), m)
-    return out
-
-
 @router.get("/schedule")
 def schedule(request: Request, user: User = Depends(me)):
     today = club.today()
@@ -54,10 +45,10 @@ def schedule(request: Request, user: User = Depends(me)):
     weeks: dict[int, list[Meetup]] = defaultdict(list)
     for m in meetups:
         weeks[club.week_number(m.date)].append(m)
-    n_plan = len(next(iter(club.plans_config().values()))["weeks"])
+    race_week = club.week_number(min(club.race_options()))
     return render(request, "schedule.html", {
         "weeks": sorted(weeks.items()), "rsvps": rsvps, "users": users, "show_past": show_past,
-        "n_plan": n_plan, "plans": club.plans_config(), "race_locked": club.locked_race_date(),
+        "race_week": race_week, "race_locked": club.locked_race_date(),
         "race_dates": club.race_options(),
     })
 

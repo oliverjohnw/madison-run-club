@@ -5,7 +5,7 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import func, select
 
-from app import club, quiz, stats
+from app import club, stats
 from app.db import SessionLocal
 from app.models import Meetup, Rsvp, Run, User
 from app.routes.race import my_days
@@ -72,7 +72,6 @@ def club_page(request: Request, user: User = Depends(me)):
         "board_all": stats.leaderboard(member_list, runs, meetups),
         "turnout": stats.turnout(sorted(meetups.values(), key=lambda m: m.date), rsvps, runs, today),
         "heat": stats.heatmap(runs, today, scale=max(1.0, len({r.user_id for r in runs}) / 2)),
-        "plans": club.plans_config(),
     })
 
 
@@ -92,16 +91,13 @@ def profile(request: Request, username: str, user: User = Depends(me)):
             .where(Rsvp.user_id == person.id, Rsvp.status == "in", Meetup.date >= today, Meetup.date < today + timedelta(days=14))
             .order_by(Meetup.date)))
     s = stats.runner_stats(runs, meetups, today)
-    plans = club.plans_config()
     return render(request, "profile.html", {
         "person": person,
         "s": s,
         "bars": stats.weekly_bars(runs, today),
         "heat": stats.heatmap(runs, today),
-        "trend": stats.pace_trend(runs, person.goal_pace_sec),
+        "trend": stats.pace_trend(runs),
         "recent": recent,
         "going": going,
-        "plan": plans.get(person.plan_key),
-        "quiz_answers": quiz.describe(person.quiz) if user.is_admin else None,
         "is_me": person.id == user.id,
     })

@@ -91,8 +91,6 @@
       {% if r["in"] %}<div title="Who's in">{{ av_stack(r["in"]|people(users)) }}</div>{% endif %}
     </div>
     {% if not compact and m.details %}<p class="small muted ticket-details">{{ m.details }}</p>{% endif %}
-    {% set wk = week_of(m.date) %}
-    {% if m.slot == "club" and user.follows_plan and 1 <= wk <= 6 %}<a class="link small" href="/plan#week-{{ wk }}" style="display:inline-block;margin-top:8px">Check out this week's workout →</a>{% endif %}
     {% set can_photo = not m.canceled and m.date <= club_today() %}
     {% if can_photo or r.get("photos") %}
     <div class="ticket-photos">
@@ -114,10 +112,6 @@
     {% endif %}
   </div>
 </article>
-{%- endmacro %}
-
-{% macro steps(sess) -%}
-<ul class="steps-list">{% for line in sess.steps %}<li>{{ line }}</li>{% endfor %}</ul>
 {%- endmacro %}
 
 {% macro effort_dots(e) -%}

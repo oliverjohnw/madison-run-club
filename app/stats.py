@@ -49,7 +49,7 @@ class RunnerStats:
     best_5k: float | None = None
     club_runs: int = 0
     week_streak: int = 0
-    week_miles: float = 0.0     # on foot, this plan week
+    week_miles: float = 0.0     # on foot, this club week
     by_activity: dict = field(default_factory=lambda: {k: 0.0 for k in ACTIVITIES})       # all-time miles
     week_by_activity: dict = field(default_factory=lambda: {k: 0.0 for k in ACTIVITIES})  # this week's miles
     badges: list = field(default_factory=list)
@@ -133,15 +133,15 @@ def badges(runs: list[Run], meetups: dict[int, Meetup], s: RunnerStats, today: d
 
 # --- Charts -----------------------------------------------------------------
 
-def plan_week_count() -> int:
-    """Weeks to draw: plan weeks plus the race week."""
+def season_week_count() -> int:
+    """Weeks to draw: from the club's first week through race week."""
     last = max(club.race_options())
     return club.week_number(last)
 
 
 def weekly_bars(runs: list[Run], today: date) -> dict:
     runs = on_foot(runs)
-    n_weeks = plan_week_count()
+    n_weeks = season_week_count()
     miles = defaultdict(float)
     for r in runs:
         miles[club.week_number(r.date)] += r.distance_mi
@@ -161,7 +161,7 @@ def weekly_bars(runs: list[Run], today: date) -> dict:
 
 
 def heatmap(runs: list[Run], today: date, scale: float = 1.0) -> dict:
-    """Tue-Mon rows x one column per plan week, shaded by miles that day.
+    """Tue-Mon rows x one column per club week, shaded by miles that day.
     `scale` stretches the shade thresholds (the club-wide map passes ~members/2)."""
     runs = on_foot(runs)
     by_day = defaultdict(float)
@@ -169,7 +169,7 @@ def heatmap(runs: list[Run], today: date, scale: float = 1.0) -> dict:
         by_day[r.date] += r.distance_mi
     race_days = set(club.race_options())
     cols = []
-    for w in range(1, plan_week_count() + 1):
+    for w in range(1, season_week_count() + 1):
         start = club.week_start(w)
         cells = []
         for i in range(7):
@@ -182,13 +182,12 @@ def heatmap(runs: list[Run], today: date, scale: float = 1.0) -> dict:
     return {"cols": cols, "rows": ["Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Mon"]}
 
 
-def pace_trend(runs: list[Run], goal_pace: int | None, width: int = 860, height: int = 220) -> dict | None:
+def pace_trend(runs: list[Run], width: int = 860, height: int = 220) -> dict | None:
     pts = sorted((r for r in runs_only(runs) if r.distance_mi >= 0.5), key=lambda r: (r.date, r.id))
     if len(pts) < 2:
         return None
     paces = [r.pace_sec for r in pts]
-    lo = min(paces + ([goal_pace] if goal_pace else []))
-    hi = max(paces + ([goal_pace] if goal_pace else []))
+    lo, hi = min(paces), max(paces)
     lo, hi = lo - 20, hi + 20
     pad_l, pad_r, pad_t, pad_b = 44, 12, 14, 22
     w, h = width - pad_l - pad_r, height - pad_t - pad_b
@@ -203,7 +202,6 @@ def pace_trend(runs: list[Run], goal_pace: int | None, width: int = 860, height:
     ticks = [{"y": y(p), "label": club.clock(p)} for p in _nice_ticks(lo, hi)]
     return {
         "width": width, "height": height, "line": line, "area": area, "dots": dots, "ticks": ticks,
-        "goal_y": y(goal_pace) if goal_pace else None, "goal": club.clock(goal_pace) if goal_pace else None,
         "x0": pad_l, "x1": pad_l + w, "bottom": pad_t + h,
     }
 

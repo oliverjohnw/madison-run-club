@@ -43,8 +43,6 @@ templates.env.filters["short"] = short_date
 templates.env.filters["rel"] = relative_day
 templates.env.globals["EFFORTS"] = EFFORTS
 templates.env.globals["ACTIVITIES"] = ACTIVITIES
-templates.env.globals["SLOT_NAMES"] = club.SLOT_NAMES
-templates.env.globals["week_of"] = club.week_number
 templates.env.globals["club_today"] = club.today  # for macros, which don't see the page's `today`
 
 

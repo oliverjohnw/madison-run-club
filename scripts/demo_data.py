@@ -1,6 +1,6 @@
 """
 Fill a LOCAL database with pretend members, RSVPs, runs and votes, so you can
-see what the site looks like mid-plan.
+see what the site looks like mid-season.
 
     uv run python scripts/demo_data.py 2026-11-05     # runs up to that date
     CLUB_TODAY=2026-11-05 uv run uvicorn app.main:app --port 8002
@@ -33,13 +33,13 @@ from app.models import Kudos, Meetup, RaceVote, Rsvp, Run, User  # noqa: E402
 from app.seed import seed_meetups  # noqa: E402
 
 PEOPLE = [
-    # username, name, goal pace, training ("plan"/"own"), how reliable (chance they show up / run solo)
-    ("maddie", "Maddie Kowalski", 405, "plan", 0.9),
-    ("tbone", "Tony Bonilla", None, "own", 0.75),
-    ("priya", "Priya Raman", 540, "plan", 0.7),
-    ("gus", "Gus Lindqvist", None, "plan", 0.8),
-    ("kels", "Kelsey Ortega", 660, "plan", 0.55),
-    ("dre", "Dre Washington", None, "own", 0.6),
+    # username, name, typical race pace (sec/mi, None = easygoing), how reliable (chance they show up / run solo)
+    ("maddie", "Maddie Kowalski", 405, 0.9),
+    ("tbone", "Tony Bonilla", None, 0.75),
+    ("priya", "Priya Raman", 540, 0.7),
+    ("gus", "Gus Lindqvist", None, 0.8),
+    ("kels", "Kelsey Ortega", 660, 0.55),
+    ("dre", "Dre Washington", None, 0.6),
 ]
 TITLES_SOLO = ["Lakeshore path loop", "Capitol Square laps", "Treadmill, don't judge", "Picnic Point out-and-back",
                "Arboretum wander", "Before-work miles", "Sunset on Monona"]
@@ -65,17 +65,15 @@ def main() -> None:
         until = date.fromisoformat(next((a for a in sys.argv[1:] if not a.startswith("--")), club.today().isoformat()))
         meetups = list(session.scalars(select(Meetup).order_by(Meetup.date)))
         users = []
-        for username, display, pace, training, _ in PEOPLE:
+        for username, display, _, _ in PEOPLE:
             u = User(username=username, display_name=display, full_name=display, email=f"{username}@example.com", phone="608-555-0100",
-                     password_hash=hash_password("moosetracks"), training=training, goal_pace_sec=pace,
-                     plan_key=club.plan_for_pace(pace) if training == "plan" else "",
-                     quiz="mile=8-930;longest=2-3;often=1-2", onboarded=True)
+                     password_hash=hash_password("moosetracks"), onboarded=True)
             session.add(u)
             users.append(u)
         session.flush()
 
-        for u, (_, _, pace, _, reliable) in zip(users, PEOPLE):
-            base = (pace or 600) + 60  # they run easier than goal most days
+        for u, (_, _, pace, reliable) in zip(users, PEOPLE):
+            base = (pace or 600) + 60  # they run easier than race pace most days
             for m in meetups:
                 if m.slot != "club":
                     continue
@@ -93,13 +91,22 @@ def main() -> None:
                 secs = int(dist * (base - speedup + rng.uniform(-15, 20)))
                 session.add(Run(user_id=u.id, date=m.date, distance_mi=round(dist, 2), duration_sec=secs, meetup_id=m.id,
                                 title=m.title, effort=rng.choice([2, 3, 3, 4]), notes=rng.choice(NOTES)))
-            # A few solo runs.
+            # A few solo runs, plus some walks and rides.
             d = club.start_date()
             while d <= until:
                 if d.weekday() in (1, 5) and rng.random() < reliable * 0.5:
                     dist = round(rng.uniform(1.5, 3.5), 2)
                     session.add(Run(user_id=u.id, date=d, distance_mi=dist, duration_sec=int(dist * (base + rng.uniform(-10, 30))),
                                     title=rng.choice(TITLES_SOLO), effort=rng.choice([1, 2, 3]), notes=rng.choice(NOTES)))
+                elif d.weekday() == 6 and rng.random() < 0.45:
+                    if rng.random() < 0.5:
+                        dist = round(rng.uniform(1.5, 3.0), 2)
+                        session.add(Run(user_id=u.id, date=d, activity="walk", distance_mi=dist,
+                                        duration_sec=int(dist * rng.uniform(1080, 1260)), title="Sunday walk", effort=1))
+                    else:
+                        dist = round(rng.uniform(8, 18), 1)
+                        session.add(Run(user_id=u.id, date=d, activity="bike", distance_mi=dist,
+                                        duration_sec=int(dist / rng.uniform(12, 16) * 3600), title="Sunday ride", effort=2))
                 d += timedelta(days=1)
             session.add(RaceVote(user_id=u.id, choice=rng.choice(club.race_options()[:2])))
         session.flush()

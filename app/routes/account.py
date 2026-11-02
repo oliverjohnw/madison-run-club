@@ -151,9 +151,8 @@ def settings_save(
 
 @router.post("/settings/avatar")
 async def settings_avatar(request: Request, user: User = Depends(me), photo: UploadFile = File(None), remove: str = Form("")):
-    onboarding = request.query_params.get("next") == "/welcome/photo"
-    own = user.training == "own"
-    page, ctx = ("welcome/photo.html", {"step": 2 if own else 4, "total": 2 if own else 4}) if onboarding else ("settings.html", {})
+    onboarding = request.query_params.get("next") == "/welcome"
+    page, ctx = ("welcome/photo.html", {}) if onboarding else ("settings.html", {})
     with SessionLocal() as session:
         u = session.get(User, user.id)
         if remove:
@@ -167,7 +166,7 @@ async def settings_avatar(request: Request, user: User = Depends(me), photo: Upl
                 return render(request, page, {**ctx, "error": str(exc)}, status_code=400)
         u.avatar_version = (u.avatar_version or 0) + 1
         session.commit()
-    return RedirectResponse("/welcome/photo" if onboarding else "/settings?saved=photo", status_code=303)
+    return RedirectResponse("/welcome" if onboarding else "/settings?saved=photo", status_code=303)
 
 
 @router.post("/settings/password")

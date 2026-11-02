@@ -23,8 +23,7 @@
   {% for n, meetups in weeks %}
   <section>
     <div class="section-head">
-      <h2 class="h2">{% if n < 1 %}Before we start{% elif n > n_plan %}Race week{% else %}Week {{ n }}{% endif %}</h2>
-      {% if 1 <= n <= n_plan and user.follows_plan %}<span class="kicker">{{ plans[user.plan_key].weeks[n-1].focus }}</span>{% endif %}
+      <h2 class="h2">{% if n < 1 %}Before we start{% elif n >= race_week %}Race week{% else %}Week {{ n }}{% endif %}</h2>
     </div>
     <div class="stack" style="--gap:12px">
       {% for m in meetups %}{{ ui.ticket(m, rsvps[m.id], users, user, "/schedule" ~ ("?past=1" if show_past else "")) }}{% endfor %}
