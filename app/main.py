@@ -28,7 +28,7 @@ from app.auth import AuthGateMiddleware, ensure_admin_user  # noqa: E402
 from app.db import init_db  # noqa: E402
 from app.routes import account, admin, home, photos, race, runs, schedule, welcome  # noqa: E402
 from app.routes.deps import StaleSession  # noqa: E402
-from app.seed import migrate_race_votes, seed_meetups  # noqa: E402
+from app.seed import seed_meetups, seed_race_sessions  # noqa: E402
 from app.templating import render  # noqa: E402
 
 
@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
     init_db()
     ensure_admin_user()
     seed_meetups()  # first run only
-    migrate_race_votes()
+    seed_race_sessions()  # once: the three 5K sessions
     yield
 
 

@@ -16,7 +16,7 @@
         <div><div class="lbl">When</div><div class="num" style="font-size:1.4rem">{{ m.date|day }}{% if m.time_label %} · {{ m.time_label }}{% endif %}</div></div>
         <div><div class="lbl">Where</div><div class="num" style="font-size:1.4rem">{{ m.location or "TBD" }}</div></div>
       </div>
-      {% if m.location and m.location != "Location TBD" and m.location != "TBD" %}
+      {% if m.location and m.location not in ("Location TBD", "TBD", cfg.race.location) %}
       <p style="margin-top:10px"><a class="link small" href="https://www.google.com/maps/search/?api=1&query={{ (m.location ~ ', Madison WI')|urlencode }}" target="_blank" rel="noopener">Open in Maps ↗</a></p>
       {% endif %}
       {% if m.details %}<div class="card" style="margin-top:16px;white-space:pre-line">{{ m.details }}</div>{% endif %}
@@ -72,7 +72,7 @@
   </div>
 
   <aside class="stack" style="--gap:16px">
-    {% for key, label in [("in", "Coming"), ("solo", "On their own time"), ("out", "Can't make it")] %}
+    {% for key, label in ([("in", "Coming"), ("out", "Can't make it")] if m.slot == "race" else [("in", "Coming"), ("solo", "On their own time"), ("out", "Can't make it")]) %}
     <div class="card tight">
       <div class="card-head" style="margin-bottom:8px"><h3 class="h3">{{ label }}</h3><span class="display" style="font-size:1.4rem">{{ rsvps[key]|length }}</span></div>
       {% if rsvps[key] %}

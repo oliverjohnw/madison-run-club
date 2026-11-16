@@ -1,4 +1,4 @@
-"""Admin: members (with private name/email), the schedule, locking the race date."""
+"""Admin: members (with private name/email), logs, and the schedule (incl. the 5K sessions)."""
 
 import secrets
 from datetime import date
@@ -10,9 +10,8 @@ from starlette.responses import RedirectResponse
 from app import club
 from app.auth import hash_password
 from app.db import SessionLocal
-from app.models import ClubSetting, Meetup, Run, User
+from app.models import Meetup, Run, User
 from app.routes.deps import admin_only
-from app.routes.race import tally
 from app.templating import render
 
 router = APIRouter(prefix="/admin")
@@ -24,11 +23,9 @@ def admin_home(request: Request, user: User = Depends(admin_only)):
         members = list(session.scalars(select(User).order_by(User.created_at)))
         run_counts = dict(session.execute(select(Run.user_id, func.count(Run.id)).group_by(Run.user_id)).all())
         meetups = list(session.scalars(select(Meetup).where(Meetup.date >= club.today()).order_by(Meetup.date)))
-        votes = tally(session)
         logs = list(session.scalars(select(Run).order_by(Run.date.desc(), Run.id.desc()).limit(200)))
     return render(request, "admin/index.html", {
-        "members": members, "run_counts": run_counts, "meetups": meetups, "votes": votes,
-        "locked": club.locked_race_date(),
+        "members": members, "run_counts": run_counts, "meetups": meetups,
         # One-time display of a freshly reset password (kept out of the URL so it never lands in logs).
         "temp": request.session.pop("temp_password", None),
         "saved": request.session.pop("admin_saved", None),
@@ -130,35 +127,6 @@ def meetup_delete(request: Request, meetup_id: int, user: User = Depends(admin_o
             session.delete(m)
             session.commit()
     return RedirectResponse("/schedule", status_code=303)
-
-
-# --- Race date --------------------------------------------------------------
-
-@router.post("/race")
-def race_lock(request: Request, user: User = Depends(admin_only), choice: str = Form("")):
-    """Lock a date (adds the race to the schedule) or unlock (choice empty)."""
-    with SessionLocal() as session:
-        row = session.get(ClubSetting, "race_date") or ClubSetting(key="race_date")
-        session.add(row)
-        race = session.scalar(select(Meetup).where(Meetup.slot == "race"))
-        try:
-            d = date.fromisoformat(choice)
-        except ValueError:
-            d = None
-        if d in club.race_options():
-            row.value = d.isoformat()
-            cfg = club.config()["race"]
-            if race is None:
-                race = Meetup(slot="race", title="The Moosehead 5K", time_label=cfg["time_label"], location=cfg["location"],
-                              details="3.1 miles. Run it, jog it, walk some of it. Then we celebrate.")
-                session.add(race)
-            race.date = d
-        else:
-            row.value = ""
-            if race:
-                session.delete(race)
-        session.commit()
-    return RedirectResponse("/admin#race", status_code=303)
 
 
 # --- Logs -------------------------------------------------------------------

@@ -71,26 +71,6 @@
   {% else %}<div class="empty">No logs yet.</div>{% endif %}
 </section>
 
-<section class="section" id="race">
-  <div class="section-head"><h2 class="h2">Race day</h2></div>
-  <div class="card">
-    <div class="row" style="gap:24px">
-      {% for d, voters in votes.items() %}
-      <div><div class="kicker">{{ d|day }}</div><div class="display" style="font-size:2rem">{{ voters|length }}</div>
-        <div class="tiny muted">{% for v in voters %}{{ v.name }}{{ ", " if not loop.last }}{% endfor %}</div></div>
-      {% endfor %}
-    </div>
-    <form method="post" action="/admin/race" class="row" style="margin-top:16px">
-      <select class="input" name="choice" style="max-width:240px">
-        <option value="">Not locked (voting open)</option>
-        {% for d in votes %}<option value="{{ d.isoformat() }}" {% if locked == d %}selected{% endif %}>Lock in {{ d|day }}</option>{% endfor %}
-      </select>
-      <button class="btn">Save</button>
-    </form>
-    <p class="tiny muted" style="margin:8px 0 0">Locking adds the race to the schedule and closes voting.</p>
-  </div>
-</section>
-
 <section class="section" id="schedule">
   <div class="section-head"><h2 class="h2">Schedule</h2><a class="link small" href="/schedule?past=1">All, including past</a></div>
   <p class="small muted" style="margin-top:-6px">Change the date, time, place or description and hit Save. "More" has the title, event tag and cancel.</p>

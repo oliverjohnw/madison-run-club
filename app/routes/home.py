@@ -8,7 +8,6 @@ from sqlalchemy import func, select
 from app import club, stats
 from app.db import SessionLocal
 from app.models import Meetup, Rsvp, Run, User
-from app.routes.race import my_days
 from app.routes.deps import me, meetups_by_id, users_by_id
 from app.routes.runs import feed_items
 from app.routes.schedule import rsvp_map
@@ -18,10 +17,12 @@ router = APIRouter()
 
 
 def race_info() -> dict:
-    """Locked race date if there is one, else the earliest option (for the countdown)."""
-    locked = club.locked_race_date()
-    target = locked or min(club.race_options())
-    return {"locked": locked, "date": target, "days": (target - club.today()).days}
+    """For the home countdown: the next 5K session (today counts), and how many are left."""
+    today = club.today()
+    dates = club.race_dates()
+    left = [d for d in dates if d >= today]
+    target = left[0] if left else max(dates)
+    return {"date": target, "days": (target - today).days, "left": len(left), "total": len(dates), "dates": dates}
 
 
 @router.get("/")
@@ -29,13 +30,14 @@ def home(request: Request, user: User = Depends(me)):
     today = club.today()
     with SessionLocal() as session:
         users = users_by_id(session)
-        # Just the next run. `date >= today` keeps a run up all day it happens (club time zone),
-        # so Thursday's run is still "next up" Thursday night and flips to the next one Friday.
-        upcoming = list(session.scalars(
-            select(Meetup).where(Meetup.date >= today, Meetup.canceled.is_(False)).order_by(Meetup.date, Meetup.id).limit(1)))
+        # The next club run plus every upcoming 5K session. `date >= today` keeps a run up all day
+        # it happens (club time zone), so Thursday's run is still "next up" Thursday night.
+        live = select(Meetup).where(Meetup.date >= today, Meetup.canceled.is_(False)).order_by(Meetup.date, Meetup.id)
+        upcoming = list(session.scalars(live.where(Meetup.slot != "race").limit(1)))
+        upcoming += list(session.scalars(live.where(Meetup.slot == "race")))
+        upcoming.sort(key=lambda m: (m.date, m.id))
         rsvps = rsvp_map(session, [m.id for m in upcoming])
         my_runs = list(session.scalars(select(Run).where(Run.user_id == user.id)))
-        voted = my_days(session, user.id)
         feed = feed_items(session, user, users, limit=4)
         week_start = club.week_start(club.week_number(today))
         week_runs = list(session.scalars(select(Run).where(Run.date >= week_start)))
@@ -46,7 +48,7 @@ def home(request: Request, user: User = Depends(me)):
     return render(request, "home.html", {
         "upcoming": upcoming, "rsvps": rsvps, "users": users, "s": s, "race": race_info(),
         "fresh": request.query_params.get("fresh") == "1",
-        "voted": voted, "feed": feed, "club_week": club_week, "week_n": club.week_number(today),
+        "feed": feed, "club_week": club_week, "week_n": club.week_number(today),
     })
 
 

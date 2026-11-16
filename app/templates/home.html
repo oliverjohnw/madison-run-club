@@ -37,15 +37,20 @@
   <aside class="stack" style="--gap:16px">
     <a class="countdown" href="/race" style="display:block;text-decoration:none">
       <svg class="topo" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 100c0-50 40-80 80-80s80 30 80 80-40 80-80 80-80-30-80-80z"/><path d="M45 100c0-35 25-58 55-58s55 23 55 58-25 58-55 58-55-23-55-58z"/><path d="M70 100c0-20 13-35 30-35s30 15 30 35-13 35-30 35-30-15-30-35z"/><path d="M90 100c0-7 4-12 10-12s10 5 10 12-4 12-10 12-10-5-10-12z"/></svg>
-      <div class="kicker">{{ "Race day" if race.locked else "Race day (earliest option)" }}</div>
+      <div class="kicker">The Moosehead 5K{% if race.left and race.left < race.total %} · {{ race.left }} session{{ 's' if race.left != 1 }} left{% endif %}</div>
+      {% if race.days == 0 %}
+      <div class="display" style="font-size:2.6rem;margin-top:8px;color:var(--blaze)">It's today</div>
+      {% elif race.days > 0 %}
       <div class="row" style="align-items:flex-end;gap:10px;margin-top:8px">
-        <span class="num">{{ race.days if race.days >= 0 else 0 }}</span>
-        <span class="display" style="font-size:1.4rem;padding-bottom:4px">day{{ 's' if race.days != 1 }}<br>to the 5K</span>
+        <span class="num">{{ race.days }}</span>
+        <span class="display" style="font-size:1.4rem;padding-bottom:4px">day{{ 's' if race.days != 1 }}<br>to {{ "the 5K" if race.left == race.total else "the next one" }}</span>
       </div>
+      {% else %}
+      <div class="display" style="font-size:2.2rem;margin-top:8px">That's a wrap</div>
+      {% endif %}
       <p class="small" style="margin:12px 0 0;opacity:.8">
-        {% if race.locked %}{{ race.date|day }}. It's locked in.
-        {% elif voted %}You picked {% for d in voted %}{{ d.strftime("%a") }}{{ " & " if loop.revindex == 2 else (", " if not loop.last else "") }}{% endfor %}. Waiting on the rest.
-        {% else %}<span style="color:var(--blaze)">→</span> We haven't picked the day. Go vote.{% endif %}
+        {% for d in race.dates %}{{ d.strftime("%a") }} {{ d.month }}/{{ d.day }}{{ " · " if not loop.last }}{% endfor %}
+        <br><span style="color:var(--blaze)">→</span> Come to any or all. Say if you're in.
       </p>
     </a>
 

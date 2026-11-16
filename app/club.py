@@ -51,8 +51,14 @@ def start_date() -> date:
     return config()["start_date"]
 
 
-def race_options() -> list[date]:
-    return list(config()["race"]["options"])
+def race_dates() -> list[date]:
+    """Dates of the 5K sessions: the race runs on the schedule (so Admin edits count),
+    falling back to config/club.yaml before they've been added."""
+    from app.models import Meetup
+
+    with SessionLocal() as session:
+        dates = sorted(session.scalars(select(Meetup.date).where(Meetup.slot == "race", Meetup.canceled.is_(False))))
+    return dates or [s["date"] for s in config()["race"]["sessions"]]
 
 
 def week_number(d: date) -> int:
@@ -62,14 +68,6 @@ def week_number(d: date) -> int:
 
 def week_start(n: int) -> date:
     return start_date() + timedelta(weeks=n - 1)
-
-
-def locked_race_date() -> date | None:
-    from app.models import ClubSetting
-
-    with SessionLocal() as session:
-        row = session.scalar(select(ClubSetting).where(ClubSetting.key == "race_date"))
-    return date.fromisoformat(row.value) if row and row.value else None
 
 
 # --- Pace + time formatting -------------------------------------------------

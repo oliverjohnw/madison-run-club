@@ -45,11 +45,10 @@ def schedule(request: Request, user: User = Depends(me)):
     weeks: dict[int, list[Meetup]] = defaultdict(list)
     for m in meetups:
         weeks[club.week_number(m.date)].append(m)
-    race_week = club.week_number(min(club.race_options()))
+    race_week = club.week_number(min(club.race_dates()))
     return render(request, "schedule.html", {
         "weeks": sorted(weeks.items()), "rsvps": rsvps, "users": users, "show_past": show_past,
-        "race_week": race_week, "race_locked": club.locked_race_date(),
-        "race_dates": club.race_options(),
+        "race_week": race_week,
     })
 
 

@@ -136,18 +136,6 @@ class MeetupPhoto(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
 
-class RaceVote(Base):
-    """One row per (member, race day that works for them). Members can pick several days.
-    Replaced the old one-vote-per-person `race_votes` table; see seed.migrate_race_votes."""
-
-    __tablename__ = "race_day_votes"
-    __table_args__ = (UniqueConstraint("user_id", "choice"),)
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
-    choice: Mapped[date] = mapped_column(Date)
-
-
 class ClubSetting(Base):
     """Key/value for the few things the admin changes on the site (e.g. the locked race date)."""
 

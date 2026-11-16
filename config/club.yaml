@@ -10,10 +10,31 @@ start_date: 2026-10-13
 
 race:
   distance_mi: 3.107
-  # The three days people vote on. Lock one in from the Admin page.
-  options: [2026-11-22, 2026-11-23, 2026-11-24]
-  time_label: "9:00 AM"
-  location: "TBD"
+  location: "John's place"
+  # Shown at the top of the 5K page. Re-read on every page load, so edits show up on refresh.
+  intro: |
+    Three chances to run the Moosehead 5K. Come to any of them, all of them, or just the one that fits. None are required.
+    Every session starts and finishes at John's place. Text him if you need the address.
+    T-shirts will be ready at the starting line.
+  # The three sessions. Like `meetups:` below, these are put on the schedule ONCE; after that,
+  # edit them on the Admin page.
+  sessions:
+    - date: 2026-11-22
+      title: "5K #1: Football & Tacos"
+      time: "4:00 PM"
+      details: |
+        Come over early to watch football and hang out. We run at 4.
+        Tacos after.
+    - date: 2026-11-23
+      title: "5K #2: Glass Nickel Night"
+      time: "6:00 PM"
+      details: |
+        Run at 6, then Glass Nickel Pizza.
+    - date: 2026-11-29
+      title: "5K #3: Chili & Spotted Cow"
+      time: "10:00 AM"
+      details: |
+        Chili and Spotted Cow at the finish line.
 
 # One club run a week. HEADS UP: this list is only read ONCE, when the
 # database has no meetups yet (a brand-new site). Editing it afterwards does

@@ -69,13 +69,6 @@ def test_member_flow():
         for path in ["/feed", "/club", "/race", "/u/jen", "/settings", "/log", "/schedule"]:
             assert c.get(path).status_code == 200, path
 
-        # Race day: several days can be picked, and clicking one again takes it back off.
-        c.post("/race/vote", data={"choice": "2026-11-22"})
-        r = c.post("/race/vote", data={"choice": "2026-11-23"})
-        assert r.status_code == 200 and r.text.count("✓ Works for me") == 2
-        r = c.post("/race/vote", data={"choice": "2026-11-23"})
-        assert r.text.count("✓ Works for me") == 1
-        assert "You picked Sun." in c.get("/").text
 
         # Email and phone stay private from non-admins; full name is the public name.
         profile = c.get("/u/jen").text
@@ -117,9 +110,6 @@ def test_admin_private_info_quick_edit_and_kudos():
         assert moved.date.isoformat() == "2026-10-23" and moved.location == "Olin Park" and moved.time_label == "6:30 PM"
         assert moved.details == "Meet by the pavilion."
 
-        r = c.post("/admin/race", data={"choice": "2026-11-23"})
-        assert "Lock in" in r.text
-        assert "The Moosehead 5K" in c.get("/schedule").text
 
 
 def test_photo_step_upload():
@@ -162,7 +152,7 @@ def test_home_shows_only_the_next_run_all_day():
     with client() as c:
         signup(c, "homebody")
         home = c.post("/welcome/done").text
-        assert home.count('class="ticket ') == 1
+        assert home.count('class="ticket ') == 1 + 3  # next club run + the three 5K sessions
         assert "Wilsons Bar" in home or "Club Run" in home
         assert home.index("Next up") < home.index("Lately")
 
@@ -278,3 +268,55 @@ def test_photo_buttons_on_run_cards():
         assert f'href="/meetups/{today_run.id}#photos">See photos' not in sched
         c.post(f"/meetups/{today_run.id}/photos", files=[("photos", ("a.jpg", _jpeg_bytes(), "image/jpeg"))])
         assert f'href="/meetups/{today_run.id}#photos">See photos from this event (1)' in c.get("/schedule").text
+
+
+def test_5k_sessions():
+    """The three sessions are on the schedule (added once at startup), with in/out RSVPs."""
+    with client() as c:
+        signup(c, "racer")
+        c.post("/welcome/done")
+        with SessionLocal() as s:
+            sessions = list(s.scalars(select(Meetup).where(Meetup.slot == "race").order_by(Meetup.date)))
+        assert [m.date.isoformat() for m in sessions] == ["2026-11-22", "2026-11-23", "2026-11-29"]
+        assert [m.time_label for m in sessions] == ["4:00 PM", "6:00 PM", "10:00 AM"]
+        assert "tacos" in sessions[0].details.lower() and "glass nickel" in sessions[1].details.lower()
+        assert "spotted cow" in sessions[2].details.lower()
+
+        page = c.get("/race").text
+        assert "The Moosehead 5K" in page and "T-shirts will be ready at the starting line" in page
+        assert "None are required" in page
+        assert page.count('class="ticket ') == 3
+        assert "On my own" not in page  # sessions are just in / out
+
+        first = sessions[0]
+        r = c.post(f"/meetups/{first.id}/rsvp?next=/race", data={"status": "in"})
+        assert r.url.path == "/race" and 'aria-pressed="true"' in r.text
+        r = c.post(f"/meetups/{first.id}/rsvp?next=/race", data={"status": "out"})
+        assert "<b>0</b> in" in r.text and "<b>1</b> can" in r.text
+
+        home = c.get("/").text
+        assert "The Moosehead 5K" in home and "Come to any or all" in home
+        for m in sessions:  # all three sessions sit in Next up, alongside the next club run
+            assert f'href="/meetups/{m.id}"' in home
+        assert "making beef" not in sessions[0].details
+        assert c.post("/race/vote", data={"choice": "2026-11-22"}).status_code in (404, 405)
+
+
+def test_race_sessions_seed_once_and_replace_old_lock():
+    from datetime import date as _date
+
+    from app.models import ClubSetting
+    from app.seed import seed_race_sessions
+
+    with SessionLocal() as s:
+        # Pretend the old "lock in race day" button made a race run on Nov 24, and undo the seeding flag.
+        s.add(Meetup(slot="race", date=_date(2026, 11, 24), title="The Moosehead 5K"))
+        flag = s.get(ClubSetting, "race_sessions_seeded")
+        if flag:
+            s.delete(flag)
+        s.commit()
+    seed_race_sessions()
+    seed_race_sessions()  # second call does nothing
+    with SessionLocal() as s:
+        dates = [m.date.isoformat() for m in s.scalars(select(Meetup).where(Meetup.slot == "race").order_by(Meetup.date))]
+    assert dates == ["2026-11-22", "2026-11-23", "2026-11-29"]

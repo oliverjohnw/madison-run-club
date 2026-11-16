@@ -29,8 +29,8 @@ from sqlalchemy import delete, select  # noqa: E402
 from app import club  # noqa: E402
 from app.auth import hash_password  # noqa: E402
 from app.db import SessionLocal, init_db  # noqa: E402
-from app.models import Kudos, Meetup, RaceVote, Rsvp, Run, User  # noqa: E402
-from app.seed import seed_meetups  # noqa: E402
+from app.models import Kudos, Meetup, Rsvp, Run, User  # noqa: E402
+from app.seed import seed_meetups, seed_race_sessions  # noqa: E402
 
 PEOPLE = [
     # username, name, typical race pace (sec/mi, None = easygoing), how reliable (chance they show up / run solo)
@@ -56,6 +56,7 @@ def wipe(session) -> None:
 def main() -> None:
     init_db()
     seed_meetups()
+    seed_race_sessions()
     rng = random.Random(7)
     with SessionLocal() as session:
         wipe(session)
@@ -75,6 +76,10 @@ def main() -> None:
         for u, (_, _, pace, reliable) in zip(users, PEOPLE):
             base = (pace or 600) + 60  # they run easier than race pace most days
             for m in meetups:
+                if m.slot == "race":
+                    if m.date > until and rng.random() < reliable:
+                        session.add(Rsvp(meetup_id=m.id, user_id=u.id, status="in" if rng.random() < 0.7 else "out"))
+                    continue
                 if m.slot != "club":
                     continue
                 showed = rng.random() < reliable
@@ -108,7 +113,6 @@ def main() -> None:
                         session.add(Run(user_id=u.id, date=d, activity="bike", distance_mi=dist,
                                         duration_sec=int(dist / rng.uniform(12, 16) * 3600), title="Sunday ride", effort=2))
                 d += timedelta(days=1)
-            session.add(RaceVote(user_id=u.id, choice=rng.choice(club.race_options()[:2])))
         session.flush()
 
         runs = list(session.scalars(select(Run)))

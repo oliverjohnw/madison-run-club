@@ -55,7 +55,8 @@
 
 {% macro rsvp_buttons(m, status, next="") -%}
 <div class="rsvp" role="group" aria-label="Are you coming?">
-  {% for key, label in [("in", "I'm in"), ("solo", "On my own"), ("out", "Can't<span class='wide-only'> make it</span>")] %}
+  {% set options = [("in", "I'm in"), ("out", "Can't<span class='wide-only'> make it</span>")] if m.slot == "race" else [("in", "I'm in"), ("solo", "On my own"), ("out", "Can't<span class='wide-only'> make it</span>")] %}
+  {% for key, label in options %}
   <form method="post" action="/meetups/{{ m.id }}/rsvp{% if next %}?next={{ next|urlencode }}{% endif %}">
     <input type="hidden" name="status" value="{{ key }}" />
     <button class="{{ 'on-' ~ key if status == key }}" aria-pressed="{{ 'true' if status == key else 'false' }}"
@@ -107,7 +108,7 @@
     {% if not m.canceled %}
     <div class="row" style="margin-top:12px">
       {{ rsvp_buttons(m, r["by_user"].get(user.id), next) }}
-      <span class="tiny muted rsvp-counts"><b>{{ r["in"]|length }}</b> in · <b>{{ r["solo"]|length }}</b> on their own · <b>{{ r["out"]|length }}</b> can't</span>
+      <span class="tiny muted rsvp-counts"><b>{{ r["in"]|length }}</b> in{% if m.slot != "race" %} · <b>{{ r["solo"]|length }}</b> on their own{% endif %} · <b>{{ r["out"]|length }}</b> can't</span>
     </div>
     {% endif %}
   </div>

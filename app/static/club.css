@@ -477,3 +477,9 @@ a.card:hover, a.countdown:hover { border-color: var(--ink-2); }
 .log-type button + button { border-left: 1.5px solid var(--line-2); }
 .log-type button.on { background: var(--pine); color: var(--on-pine); }
 .ticket-photos { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; margin-top: 10px; }
+
+/* The 5K page intro */
+.race-intro { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--blaze); border-radius: var(--radius); padding: 14px 18px; max-width: 760px; }
+.race-intro p { margin: 0; }
+.race-intro p + p { margin-top: 6px; }
+.race-intro p:first-child { font-weight: 600; }

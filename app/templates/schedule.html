@@ -24,6 +24,7 @@
   <section>
     <div class="section-head">
       <h2 class="h2">{% if n < 1 %}Before we start{% elif n >= race_week %}Race week{% else %}Week {{ n }}{% endif %}</h2>
+      {% if n >= race_week %}<a class="link small" href="/race">See the 5K page →</a>{% endif %}
     </div>
     <div class="stack" style="--gap:12px">
       {% for m in meetups %}{{ ui.ticket(m, rsvps[m.id], users, user, "/schedule" ~ ("?past=1" if show_past else "")) }}{% endfor %}
@@ -33,17 +34,5 @@
   <div class="empty">No upcoming runs. {% if user.is_admin %}<a class="link" href="/admin/meetups/new">Add one</a>.{% endif %}</div>
   {% endfor %}
 
-  {% if not race_locked %}
-  <section>
-    <div class="section-head"><h2 class="h2">The 5K</h2></div>
-    <a class="countdown" href="/race" style="display:block;text-decoration:none">
-      <div class="kicker">Race day · not locked in yet</div>
-      <div class="display" style="font-size:2rem;margin-top:8px">
-        {% for d in race_dates %}{{ d.strftime("%a %b") }} {{ d.day }}{{ " / " if not loop.last }}{% endfor %}
-      </div>
-      <p class="small" style="margin:10px 0 0;opacity:.8"><span style="color:var(--blaze)">→</span> Vote on the day</p>
-    </a>
-  </section>
-  {% endif %}
 </div>
 {% endblock %}

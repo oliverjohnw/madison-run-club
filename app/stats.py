@@ -135,7 +135,7 @@ def badges(runs: list[Run], meetups: dict[int, Meetup], s: RunnerStats, today: d
 
 def season_week_count() -> int:
     """Weeks to draw: from the club's first week through race week."""
-    last = max(club.race_options())
+    last = max(club.race_dates())
     return club.week_number(last)
 
 
@@ -167,7 +167,7 @@ def heatmap(runs: list[Run], today: date, scale: float = 1.0) -> dict:
     by_day = defaultdict(float)
     for r in runs:
         by_day[r.date] += r.distance_mi
-    race_days = set(club.race_options())
+    race_days = set(club.race_dates())
     cols = []
     for w in range(1, season_week_count() + 1):
         start = club.week_start(w)
